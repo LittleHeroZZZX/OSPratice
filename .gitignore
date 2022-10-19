@@ -1,6 +1,10 @@
 # Prerequisites
 *.d
 
+# vscode
+.vscode
+# tags
+tags
 # Object files
 *.o
 *.ko
