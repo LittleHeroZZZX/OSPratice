@@ -93,9 +93,9 @@ char *stateInt2Str(int taskStateValue) {
 
 void printProcess(struct task_struct *task, char* relationship) {
   if (getLenth(task->comm) <= MAX_NAME_LENGTH)
-    printk(KERN_WARNING "|%-12s|%12.12s  |%10d|%18s|",relationship, task->comm, task->pid, stateInt2Str(task->__state));
+    printk(KERN_WARNING "|%-12s|%12.12s  |%10d|%18s|",relationship, task->comm, task->pid, stateInt2Str(task->state));
   else
-    printk(KERN_WARNING "|%-12s|%11.11s+  |%10d|%18s|",relationship, task->comm, task->pid, stateInt2Str(task->__state));
+    printk(KERN_WARNING "|%-12s|%11.11s+  |%10d|%18s|",relationship, task->comm, task->pid, stateInt2Str(task->state));
   printk(KERN_WARNING "|%-12s|%-14s|%-10s|%-17s|", "------------", "-------------", "----------", "------------------");
 }
 
@@ -115,7 +115,7 @@ static int list_process_init(void) {
   // print parent
   pid_struct = find_get_pid(pid_number);
   p = get_pid_task(pid_struct, PIDTYPE_PID);
-  printProcess(p, "Parent");
+  printProcess(p->parent, "Parent");
   // print children
   struct task_struct *child;
   list_for_each_entry(child, &p->children, sibling) {

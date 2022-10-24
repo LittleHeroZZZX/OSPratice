@@ -87,16 +87,20 @@ char *stateInt2Str(int taskStateValue) {
 
 static int list_process_init(void) {
   struct task_struct *p;
+  struct pid *pid_struct;
   printk(KERN_WARNING "Hello Zhou Xin! I'm installed.\n");
   printk(KERN_WARNING "%12s%8s%15s%12s%8s", "Name", "PID", "State", "Priority",
          "Parent");
-  for_each_process(p) {
-    if (getLenth(p->comm) <= MAX_NAME_LENGTH)
-      printk(KERN_WARNING "%12.12s%8d%15s%12d%8d", p->comm, p->pid,
-             stateInt2Str(p->__state), p->prio, p->parent->pid);
+  pid_struct = find_get_pid(2);
+  p = get_pid_task(pid_struct, PIDTYPE_PID);
+  struct task_struct *child;
+  list_for_each_entry(child, &p->children, sibling) {
+    if (getLenth(child->comm) <= MAX_NAME_LENGTH)
+      printk(KERN_WARNING "%12.12s%8d%15s%12d%8d", child->comm, child->pid,
+             stateInt2Str(child->state), child->prio, child->parent->pid);
     else
-      printk(KERN_WARNING "%11.11s+%8d%15s%12d%8d", p->comm, p->pid,
-             stateInt2Str(p->__state), p->prio, p->parent->pid);
+      printk(KERN_WARNING "%11.11s+%8d%15s%12d%8d", child->comm, child->pid,
+             stateInt2Str(child->state), child->prio, child->parent->pid);
   }
   return 0;
 }

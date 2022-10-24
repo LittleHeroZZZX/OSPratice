@@ -1,4 +1,4 @@
-BASEINCLUDE ?= /usr/src/linux-headers-`uname -r`
+BASEINCLUDE ?= /root/kernel
 my_copy_file-objs := copyfile.o
 obj-m := my_copy_file.o
 all:
