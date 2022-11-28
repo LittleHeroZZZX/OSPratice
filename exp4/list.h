@@ -1,13 +1,13 @@
 /*
  * @Author: zhouxin zzzx@hdu.edu.cn
  * @Date: 2022-11-25 14:23:24
- * @LastEditTime: 2022-11-25 14:55:23
+ * @LastEditTime: 2022-11-25 21:21:19
  * @Software: VSCode
  */
 
 #define offset_of(type, member) ((size_t) &((type *)0)->member)
 #define container_of(ptr, type, member) ({ \
-    const typeof(((type *)0)->member) *__mptr = (ptr); \
+    const __typeof__(((type *)0)->member) *__mptr = (ptr); \
     (type *)((char *)__mptr - offset_of(type, member)); \
 })
 
@@ -43,6 +43,12 @@ static inline void list_add(struct list_head *new_node, struct list_head *head)
     __list_add(new_node, head, head->next);
 }
 
+static inline void list_del(struct list_head *entry)
+{
+    entry->prev->next = entry->next;
+    entry->next->prev = entry->prev;
+}
+
 
 
 #define list_for_each(pos, head)\
@@ -55,3 +61,13 @@ static inline void list_add(struct list_head *new_node, struct list_head *head)
     for (pos = list_entry((head)->next, typeof(*pos), member); \
          &pos->member != (head); \
          pos = list_entry(pos->member.next, typeof(*pos), member))
+
+// 修正链表指针偏移
+#define update_list(ptr, member, delta) \
+        struct list_head *pos;          \
+        (ptr)->member.next = (struct list_head *)((char *) (ptr)->member.next + delta); \
+        (ptr)->member.prev = (struct list_head *)((char *) (ptr)->member.prev + delta); \
+        list_for_each(pos, &(ptr)->member) { \
+            pos->next = (struct list_head *)((char *) pos->next + delta); \
+            pos->prev = (struct list_head *)((char *) pos->prev + delta); \
+        }
