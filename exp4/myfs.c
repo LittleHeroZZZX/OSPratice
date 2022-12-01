@@ -133,6 +133,11 @@ void* allocate_block(super_block *sb, size_t block_count)
     // 分配盘块时，空出一个盘块，用于模拟真实情况
     void *block = NULL;
     free_block_list *fb;
+
+    if (block_count == 0)
+    {
+        return NULL;
+    }
     if (sb->free_block_count < block_count + 1)
     {
         printf("No enough space\n");
@@ -153,21 +158,81 @@ void* allocate_block(super_block *sb, size_t block_count)
                 fb->count -= block_count;
                 fb->block_index += block_count;
                 memcpy((char*)fb + block_count * BLOCK_SIZE, fb, sizeof(free_block_list));
-                list_add(&(((free_block_list *) ((char*)fb + block_count * BLOCK_SIZE))->list), fb->list.prev);
+                list_add(&(((free_block_list *) ((char*)fb + block_count * BLOCK_SIZE))->list), fb);
                 list_del(&fb->list);
 //                fb = list_entry(fb->list.next, free_block_list, list);
             }
             break;
         }
     }
+    return block;
 
 }
+
+
+void free_block(super_block *sb, void *block, size_t block_count)
+//todo: check if is OK
+{
+    free_block_list *fb = (free_block_list *)block;
+    free_block_list *p;
+    fb->count = block_count;
+    fb->block_index = (size_t)((char*)block - (char*)sb->start_pos)/BLOCK_SIZE;
+    list_for_each_entry(p, &sb->free_block_list.list, list)
+    {
+        if (p->block_index > fb->block_index)
+        {
+            list_add(&fb->list, p->list.prev);
+            break;
+        }
+    }
+    list_for_each_entry(p, &sb->free_block_list.list, list)
+    {
+        if (p->block_index + p->count == list_entry(p->list.next, free_block_list, list)->block_index)
+        {
+            merge_block(p, list_entry(p->list.next, free_block_list, list));
+        }
+    }
+}
+
+void merge_block(free_block_list *fbl1, free_block_list *fbl2)
+{
+    fbl1->count += fbl2->count;
+    list_del(&fbl2->list);
+}
+
+void show(free_block_list *fbl)
+{
+    free_block_list *p;
+    list_for_each_entry(p, &fbl->list, list)
+    {
+        printf("block_index: %d, count: %d\n", p->block_index, p->count);
+    }
+}
+
 
 int main()
 {
     super_block *sb;
-    start_sys("disc.bak",&sb, 0);
+    ptrdiff_t delta;
+    start_sys("disc.bak",&sb, 1);
     allocate_block(sb, 10);
     save("disc.bak", sb->start_pos, SIZE);
+    size_t blocks[10];
+    for (int i=0; i<100; i++)
+    {
+        blocks[i] = allocate_block(sb, 1);
+        free_block_list *fb = (free_block_list*) blocks[i];
+        delta = (char*)fb - (char*)sb;
+        printf("block index: %lld\n", delta/BLOCK_SIZE);
+        setbuf(stdout,NULL);
+        printf("block_index: %d, count: %d, address: %p\n",
+            fb->block_index, fb->count, fb);
+        printf("first free block address: %p\n", sb->free_block_list.list.next);
+        printf("\n");
+    }
+    show(&sb->free_block_list);
+    for (int i=0; i<100; i+=2)
+        free_block(sb, blocks[i], 1);
+    show(&sb->free_block_list);
     return 0;
 }

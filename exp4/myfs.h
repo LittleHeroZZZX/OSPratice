@@ -7,7 +7,7 @@
 #include "list.h"
 
 #define BLOCK_SIZE 1024
-#define SIZE 1024000
+#define SIZE 102400
 #define FILENAME_LEN 255
 
 
@@ -51,3 +51,5 @@ void my_format(super_block **sb);
 void revover(super_block *sb, char *bak_file);
 void save(char *bak_file, void* start_pos, size_t size);
 void* allocate_block(super_block *sb, size_t block_count);
+void free_block(super_block *sb, void *block, size_t block_count);
+void merge_block(free_block_list *fbl1, free_block_list *fbl2);
