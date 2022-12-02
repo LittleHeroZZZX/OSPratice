@@ -63,4 +63,13 @@ typedef struct super_block
     inode *root;
 } super_block;
 
+typedef struct user_open{
+    fcb* f_fcb;
+    size_t f_block_start;
+    char path[256];
+    size_t p_WR;
+    size_t pcb_modified;
+    size_t is_empty;
+}user_open;
+
 #endif //OSPRATICE_TYPES_H
