@@ -18,7 +18,8 @@
 
 #define ORDINARY_FILE 0
 #define DIRECTORY 1
-
+#define ERR_NOT_ENOUGH_SPACE -1
+#define ERR_PARAM_INVALID -2
 
 typedef struct free_block_list
 {
@@ -60,7 +61,7 @@ typedef struct super_block
     // 文件系统在内存中的起始地址
     void *start_pos;
     free_block_list free_block_list;
-    inode *root;
+    inode root;
 } super_block;
 
 typedef struct user_open{

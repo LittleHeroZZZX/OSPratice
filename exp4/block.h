@@ -12,8 +12,8 @@
 #include "types.h"
 #include "myfs.h"
 
-void* allocate_block(super_block *sb, size_t block_count);
-void free_block(super_block *sb, void *block, size_t block_count);
+size_t allocate_block(super_block *sb, size_t block_count);
+size_t free_block(super_block *sb, size_t block_index, size_t block_count);
 void merge_block(free_block_list *fbl1, free_block_list *fbl2);
 void* index_to_addr(super_block *sb, size_t index);
 size_t addr_to_index(super_block *sb, void *addr);

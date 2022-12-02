@@ -4,27 +4,27 @@
 
 #include "block.h"
 
-void* allocate_block(super_block *sb, size_t block_count)
+size_t allocate_block(super_block *sb, size_t block_count)
 {
     // 分配盘块时，空出一个盘块，用于模拟真实情况
-    void *block = NULL;
+    size_t block = ERR_PARAM_INVALID;
     free_block_list *fb;
 
     if (block_count == 0)
     {
-        return NULL;
+        return ERR_PARAM_INVALID;
     }
     if (sb->free_block_count < block_count + 1)
     {
         printf("No enough space\n");
-        return NULL;
+        return ERR_NOT_ENOUGH_SPACE;
     }
     fb = &sb->free_block_list;
     list_for_each_entry(fb, &sb->free_block_list.list, list)
     {
         if (fb->count >= block_count)
         {
-            block = fb;
+            block = fb->block_index;
             if (fb->count == block_count)
             {
                 list_del(&fb->list);
@@ -55,9 +55,10 @@ size_t addr_to_index(super_block *sb, void *addr)
     return (addr - sb->start_pos) / BLOCK_SIZE;
 }
 
-void free_block(super_block *sb, void *block, size_t block_count)
+size_t free_block(super_block *sb, size_t block_index, size_t block_count)
 {
-    free_block_list *fb = (free_block_list *)block;
+    free_block_list * block = (free_block_list *) index_to_addr(sb, block_index);
+    free_block_list *fb = block;
     free_block_list *p;
     fb->count = block_count;
     fb->block_index = (size_t)((char*)block - (char*)sb->start_pos)/BLOCK_SIZE;
