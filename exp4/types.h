@@ -72,7 +72,7 @@ typedef struct user_open{
     size_t f_block_start;
     char path[256];
     size_t p_WR;
-
+    char mode[8];
     unsigned char pcb_modified;
     unsigned char is_empty;
 }user_open;

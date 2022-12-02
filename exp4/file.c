@@ -13,7 +13,12 @@ void create_fcb(fcb *fcb, char *filename, unsigned char attribute, size_t length
     fcb->last_modify_time = *localtime(&t);
 }
 
-void my_fwrite(char *buf, size_t size, user_open *_user_open, char *mode)
+void my_fread(user_open *_user_open, char *buf,size_t size)
+{
+    // ToDo
+}
+
+void my_fwrite(char *buf, size_t size, user_open *_user_open)
 {
     // ToDo
 }
