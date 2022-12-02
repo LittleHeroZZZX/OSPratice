@@ -5,12 +5,7 @@
  * @Software: VSCode
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string.h>
 #include "myfs.h"
-
 // 初始化文件系统
 // 首先检查文件系统备份文件是否存在
 // 从备份文件恢复或者格式化一个新的文件系统
@@ -39,15 +34,6 @@ void recover(super_block **sb, char *bak_file)
     (*sb)->start_pos = fs;
     free_block_list *p_fbl = &(*sb)->free_block_list;
     update_list(p_fbl, list, delta);
-
-//    struct list_head *pos;
-//    struct list_head *nex_bak;
-//    p_fbl->list.next = (struct list_head *)((char *)p_fbl->list.next + delta);
-//    p_fbl->list.prev = (struct list_head *)((char *)p_fbl->list.prev + delta);
-//    for (pos = p_fbl->list.next; pos != &(p_fbl)->list; pos = pos->next) {
-//        pos->next = (struct list_head *) ((char *) pos->next + delta);
-//        pos->prev = (struct list_head *) ((char *) pos->prev + delta);
-//    }
     fclose(fp);
 }
 
@@ -128,77 +114,7 @@ void save(char *bak_file, void* start_pos, size_t size)
     fclose(fp);
 }
 
-void* allocate_block(super_block *sb, size_t block_count)
-{
-    // 分配盘块时，空出一个盘块，用于模拟真实情况
-    void *block = NULL;
-    free_block_list *fb;
 
-    if (block_count == 0)
-    {
-        return NULL;
-    }
-    if (sb->free_block_count < block_count + 1)
-    {
-        printf("No enough space\n");
-        return NULL;
-    }
-    fb = &sb->free_block_list;
-    list_for_each_entry(fb, &sb->free_block_list.list, list)
-    {
-        if (fb->count >= block_count)
-        {
-            block = fb;
-            if (fb->count == block_count)
-            {
-                list_del(&fb->list);
-            }
-            else
-            {
-                fb->count -= block_count;
-                fb->block_index += block_count;
-                memcpy((char*)fb + block_count * BLOCK_SIZE, fb, sizeof(free_block_list));
-                list_add(&(((free_block_list *) ((char*)fb + block_count * BLOCK_SIZE))->list), fb);
-                list_del(&fb->list);
-//                fb = list_entry(fb->list.next, free_block_list, list);
-            }
-            break;
-        }
-    }
-    return block;
-
-}
-
-
-void free_block(super_block *sb, void *block, size_t block_count)
-//todo: check if is OK
-{
-    free_block_list *fb = (free_block_list *)block;
-    free_block_list *p;
-    fb->count = block_count;
-    fb->block_index = (size_t)((char*)block - (char*)sb->start_pos)/BLOCK_SIZE;
-    list_for_each_entry(p, &sb->free_block_list.list, list)
-    {
-        if (p->block_index > fb->block_index)
-        {
-            list_add(&fb->list, p->list.prev);
-            break;
-        }
-    }
-    list_for_each_entry(p, &sb->free_block_list.list, list)
-    {
-        if (p->block_index + p->count == list_entry(p->list.next, free_block_list, list)->block_index)
-        {
-            merge_block(p, list_entry(p->list.next, free_block_list, list));
-        }
-    }
-}
-
-void merge_block(free_block_list *fbl1, free_block_list *fbl2)
-{
-    fbl1->count += fbl2->count;
-    list_del(&fbl2->list);
-}
 
 void show(free_block_list *fbl)
 {
@@ -215,14 +131,15 @@ int main()
     super_block *sb;
     ptrdiff_t delta;
     start_sys("disc.bak",&sb, 1);
-    allocate_block(sb, 10);
+    show(&sb->free_block_list);
     save("disc.bak", sb->start_pos, SIZE);
-    size_t blocks[10];
-    for (int i=0; i<100; i++)
+    void* blocks[1000];
+    for (int i=0; i<10; i++)
     {
-        blocks[i] = allocate_block(sb, 1);
+        blocks[i] = allocate_block(sb, i+1);
         free_block_list *fb = (free_block_list*) blocks[i];
         delta = (char*)fb - (char*)sb;
+        printf("i = %d\n", i);
         printf("block index: %lld\n", delta/BLOCK_SIZE);
         setbuf(stdout,NULL);
         printf("block_index: %d, count: %d, address: %p\n",
@@ -231,8 +148,9 @@ int main()
         printf("\n");
     }
     show(&sb->free_block_list);
-    for (int i=0; i<100; i+=2)
-        free_block(sb, blocks[i], 1);
+    for (int i=0; i<10; i+=2)
+        free_block(sb, blocks[i], i+1);
     show(&sb->free_block_list);
+    save("disc.bak", sb->start_pos, SIZE);
     return 0;
 }

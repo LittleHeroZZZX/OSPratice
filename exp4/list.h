@@ -4,7 +4,8 @@
  * @LastEditTime: 2022-11-25 21:21:19
  * @Software: VSCode
  */
-
+#ifndef LIST_H
+#define LIST_H
 #define offset_of(type, member) ((size_t) &((type *)0)->member)
 #define container_of(ptr, type, member) ({ \
     const __typeof__(((type *)0)->member) *__mptr = (ptr); \
@@ -71,3 +72,4 @@ static inline void list_del(struct list_head *entry)
             pos->next = (struct list_head *)((char *) pos->next + delta); \
             pos->prev = (struct list_head *)((char *) pos->prev + delta); \
         }
+#endif //LIST_H
