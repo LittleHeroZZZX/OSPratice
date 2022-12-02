@@ -11,6 +11,8 @@
 
 void create_fcb(fcb *fcb, char *filename, unsigned char attribute, size_t length);
 
+user_open *my_open(char *fileName, int mode);
+
 void my_fread(user_open *_user_open, char *buf,size_t size);
 
 void my_fwrite(char *buf, size_t size, user_open *_user_open);
