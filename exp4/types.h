@@ -1,20 +1,23 @@
 //
 // Created by littleherozzzx on 02/12/2022.
+// 存放公共数据结构和宏定义常量
 //
 
 #ifndef TYPES_H
 #define TYPES_H
-#ifndef STDIO_H
-#define STDIO_H
-#include <stdio.h>
-#endif //STDIO_H
 
+#include <stdio.h>
+#include <time.h>
 #include "list.h"
 
 
 #define BLOCK_SIZE 1024
 #define SIZE 1024000
 #define FILENAME_LEN 255
+#define DIR_MAX_COUNT ((BLOCK_SIZE-sizeof(size_t))/sizeof(inode))
+
+#define ORDINARY_FILE 0
+#define DIRECTORY 1
 
 
 typedef struct free_block_list
@@ -27,17 +30,25 @@ typedef struct free_block_list
 
 } free_block_list;
 typedef struct FCB{
-    char filename[8];
-    char exname[3];
+    char filename[256];
     // 0: directory, 1: file
     unsigned char attribute;
-    size_t create_time;
-    size_t create_date;
-    size_t last_modify_date;
-    size_t last_modify_time;
+    struct tm create_time;
+    struct tm last_modify_time;
     size_t length;
 }fcb;
-
+typedef struct inode{
+    char filename[255];
+    size_t length;
+    size_t inode_index;
+    // 0: directory, 1: file
+    unsigned char attribute;
+} inode;
+typedef struct dir
+{
+    size_t file_count;
+    inode files[DIR_MAX_COUNT];
+};
 typedef struct super_block
 {
     size_t block_count;
@@ -49,6 +60,7 @@ typedef struct super_block
     // 文件系统在内存中的起始地址
     void *start_pos;
     free_block_list free_block_list;
+    inode *root;
 } super_block;
 
 #endif //OSPRATICE_TYPES_H

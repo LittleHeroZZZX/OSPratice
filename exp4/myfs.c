@@ -93,6 +93,15 @@ void my_format(super_block ** p_sb)
     fb_node->count = sb->block_count;
     list_add(&fb_node->list, &sb->free_block_list);
 
+    // todo:初始化根目录
+    inode *root = allocate_block(sb, (sizeof(inode)+BLOCK_SIZE-1)/BLOCK_SIZE);
+    root->attribute = DIRECTORY;
+    root->inode_index = addr_to_index(sb, root);
+    strcpy(root->filename, "/");
+
+
+
+
 }
 
 

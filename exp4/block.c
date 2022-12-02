@@ -45,6 +45,15 @@ void* allocate_block(super_block *sb, size_t block_count)
 
 }
 
+void* index_to_addr(super_block *sb, size_t index)
+{
+    return sb->start_pos + index * BLOCK_SIZE;
+}
+
+size_t addr_to_index(super_block *sb, void *addr)
+{
+    return (addr - sb->start_pos) / BLOCK_SIZE;
+}
 
 void free_block(super_block *sb, void *block, size_t block_count)
 {
