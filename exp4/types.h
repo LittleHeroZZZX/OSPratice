@@ -10,6 +10,7 @@
 #include <time.h>
 #include "list.h"
 
+extern char* current_dir;
 
 #define BLOCK_SIZE 1024
 #define SIZE 1024000
@@ -33,7 +34,7 @@ typedef struct free_block_list
 typedef struct FCB{
     char filename[256];
     // 0: directory, 1: file
-    unsigned char attribute;
+    unsigned char attribute; // 文件属性 宏定义 ORDINARY_FILE 0 DIRECTORY 1
     struct tm create_time;
     struct tm last_modify_time;
     size_t length;
@@ -45,11 +46,13 @@ typedef struct inode{
     // 0: directory, 1: file
     unsigned char attribute;
 } inode;
+
 typedef struct dir
 {
     size_t file_count;
     inode files[DIR_MAX_COUNT];
 };
+
 typedef struct super_block
 {
     size_t block_count;
@@ -69,8 +72,9 @@ typedef struct user_open{
     size_t f_block_start;
     char path[256];
     size_t p_WR;
-    size_t pcb_modified;
-    size_t is_empty;
+
+    unsigned char pcb_modified;
+    unsigned char is_empty;
 }user_open;
 
 #endif //OSPRATICE_TYPES_H

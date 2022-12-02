@@ -8,5 +8,11 @@
 
 #ifndef OSPRATICE_FILE_H
 #define OSPRATICE_FILE_H
+
 void create_fcb(fcb *fcb, char *filename, unsigned char attribute, size_t length);
+
+void my_fwrite(char *buf, size_t size, user_open *_user_open, char *mode);
+
+void my_cd(char *dir);
+
 #endif //OSPRATICE_FILE_H
