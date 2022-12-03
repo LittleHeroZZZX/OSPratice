@@ -13,15 +13,30 @@
 extern char* current_dir;
 
 #define BLOCK_SIZE 1024
-#define SIZE 1024000
+#define SIZE 102400000
 #define FILENAME_LEN 255
 #define DIR_MAX_COUNT ((BLOCK_SIZE-sizeof(size_t))/sizeof(inode))
+#define FILE_MAX_COUNT 1024
+#define INODE_MAX_COUNT FILE_MAX_COUNT
 
 #define ORDINARY_FILE 0
 #define DIRECTORY 1
+
+// 索引块数量以及分布
+#define LEVEL0_INDEX_CNT 10
+#define LEVEL1_INDEX_CNT 1
+#define LEVEL2_INDEX_CNT 1
+#define INDEX_CNT (LEVEL0_INDEX_CNT+LEVEL1_INDEX_CNT+LEVEL2_INDEX_CNT)
+#define LEVEL0_BLOCK_CNT LEVEL0_INDEX_CNT
+#define LEVEL1_BLOCK_CNT (LEVEL1_INDEX_CNT*BLOCK_SIZE/sizeof(size_t))
+#define LEVEL2_BLOCK_CNT (LEVEL2_INDEX_CNT*BLOCK_SIZE/sizeof(size_t)*BLOCK_SIZE/sizeof(size_t))
+
+#define MAX_FILE_SIZE (LEVEL0_INDEX_CNT*BLOCK_SIZE+LEVEL1_INDEX_CNT*BLOCK_SIZE/sizeof(size_t)+LEVEL2_INDEX_CNT*BLOCK_SIZE/sizeof(size_t)/sizeof(size_t))
+
+
 #define ERR_NOT_ENOUGH_SPACE -1
 #define ERR_PARAM_INVALID -2
-
+#define ERR_NOT_ENOUGH_INODE -3
 typedef struct free_block_list
 {
     struct list_head list;
@@ -37,6 +52,8 @@ typedef struct FCB{
     unsigned char attribute; // 文件属性 宏定义 ORDINARY_FILE 0 DIRECTORY 1
     struct tm create_time;
     struct tm last_modify_time;
+
+    size_t mixed_index_block[INDEX_CNT]; // 混合索引块，前10个直接索引块，1第1个一级索引块，第12个二级索引块
     size_t length;
 }fcb;
 typedef struct inode{
@@ -58,8 +75,8 @@ typedef struct super_block
     size_t block_count;
     size_t free_block_count;
     size_t free_block_list_index;
-    //第零块逻辑盘块的物理盘地址
-    size_t block_offset;
+    // 索引节点数组
+    fcb *fcb_array;
 
     // 文件系统在内存中的起始地址
     void *start_pos;

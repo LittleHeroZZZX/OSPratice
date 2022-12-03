@@ -16,6 +16,7 @@
 void start_sys(char *bak_file, super_block **sb, int recreate);
 void my_format(super_block **sb);
 void recover(super_block **sb, char *bak_file);
-void save(char *bak_file, void* start_pos, size_t size);
+void save(char *bak_file, super_block sb, size_t size);
+
 
 #endif //MYFS_H

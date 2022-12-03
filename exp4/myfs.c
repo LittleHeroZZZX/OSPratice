@@ -34,6 +34,7 @@ void recover(super_block **sb, char *bak_file)
     (*sb)->start_pos = fs;
     free_block_list *p_fbl = &(*sb)->free_block_list;
     update_list(p_fbl, list, delta);
+    (*sb)->fcb_array = (char*)(*sb)->fcb_array + delta;
     fclose(fp);
 }
 
@@ -93,18 +94,29 @@ void my_format(super_block ** p_sb)
     fb_node->count = sb->block_count;
     list_add(&fb_node->list, &sb->free_block_list);
 
+    size_t fcb_array_block_index = allocate_block(sb, (sizeof(fcb)*INODE_MAX_COUNT+BLOCK_SIZE-1)/BLOCK_SIZE);
+    if (fcb_array_block_index != 1)
+    {
+        printf("fcb_array_block_index error\n");
+        exit(1);
+    }
+    sb->fcb_array = index_to_addr(sb, fcb_array_block_index);
 
 
+
+
+    // 初始化根目录
 
 
 
 }
 
 
-void save(char *bak_file, void* start_pos, size_t size)
+void save(char *bak_file, super_block sb, size_t size)
 {
     FILE *fp;
     size_t ret;
+    void *start_pos = sb.start_pos;
     fopen_s(&fp, bak_file, "wb+");
     if (fp == NULL)
     {
@@ -113,6 +125,12 @@ void save(char *bak_file, void* start_pos, size_t size)
     }
     ret = fwrite(start_pos, 1, size, fp);
     if (ret != size) {
+        printf("write error\n");
+        exit(1);
+    }
+//  保存索引节点数组
+    ret = fwrite(sb.fcb_array, 1, sizeof(fcb) * INODE_MAX_COUNT, fp);
+    if (ret != sizeof(fcb) * INODE_MAX_COUNT) {
         printf("write error\n");
         exit(1);
     }
@@ -133,29 +151,13 @@ void show(free_block_list *fbl)
 
 int main()
 {
+
     super_block *sb;
     ptrdiff_t delta;
     start_sys("disc.bak",&sb, 1);
     show(&sb->free_block_list);
-    save("disc.bak", sb->start_pos, SIZE);
-    void* blocks[1000];
-    for (int i=0; i<10; i++)
-    {
-        blocks[i] = allocate_block(sb, i+1);
-        free_block_list *fb = (free_block_list*) blocks[i];
-        delta = (char*)fb - (char*)sb;
-        printf("i = %d\n", i);
-        printf("block index: %lld\n", delta/BLOCK_SIZE);
-        setbuf(stdout,NULL);
-        printf("block_index: %d, count: %d, address: %p\n",
-            fb->block_index, fb->count, fb);
-        printf("first free block address: %p\n", sb->free_block_list.list.next);
-        printf("\n");
-    }
+    save("disc.bak", *sb, SIZE);
+
     show(&sb->free_block_list);
-    for (int i=0; i<10; i+=2)
-        free_block(sb, blocks[i], i+1);
-    show(&sb->free_block_list);
-    save("disc.bak", sb->start_pos, SIZE);
     return 0;
 }

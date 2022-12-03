@@ -36,7 +36,6 @@ size_t allocate_block(super_block *sb, size_t block_count)
                 memcpy((char*)fb + block_count * BLOCK_SIZE, fb, sizeof(free_block_list));
                 list_add(&(((free_block_list *) ((char*)fb + block_count * BLOCK_SIZE))->list), fb);
                 list_del(&fb->list);
-//                fb = list_entry(fb->list.next, free_block_list, list);
             }
             break;
         }
