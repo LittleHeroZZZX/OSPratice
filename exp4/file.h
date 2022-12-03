@@ -6,6 +6,7 @@
 #include "types.h"
 #include "string.h"
 #include "block.h"
+#include "time.h"
 
 
 
@@ -17,9 +18,15 @@ void apply_inode(super_block *sb, inode *inode, char *filename, unsigned char at
 
 user_open *my_open(char *fileName, int mode);
 
-void *do_read(super_block *sb,fcb *fcb, size_t size)
+void *do_read(super_block *sb,fcb *fcb, size_t size);
+
+void do_write(super_block *sb, fcb *fcb, void *buff, size_t size);
 
 size_t *get_blocks(super_block *sb, fcb *fcb);
+
+void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt);
+
+void update_fcb(fcb *fcb, unsigned char attribute, size_t length);
 
 void my_fread(user_open *_user_open, char *buf,size_t size);
 
