@@ -101,12 +101,6 @@ void my_format(super_block ** p_sb)
         exit(1);
     }
     sb->fcb_array = index_to_addr(sb, fcb_array_block_index);
-
-
-
-
-
-//    todo 先创建一个目录文件
     size_t fcb_index = create_file(sb, NULL, "/", DIRECTORY, 0);
     if (fcb_index < 0)
     {
@@ -114,7 +108,12 @@ void my_format(super_block ** p_sb)
         exit(1);
     }
     sb->root_index = fcb_index;
-    create_file(sb, index_to_fcb(sb, fcb_index), "users", DIRECTORY, 0);
+    size_t users_inode =  create_file(sb, index_to_fcb(sb, fcb_index), "users", DIRECTORY, 0);
+    create_file(sb, index_to_fcb(sb, fcb_index), "groups", DIRECTORY, 0);
+    create_file(sb, index_to_fcb(sb, users_inode), "group4", DIRECTORY, 0);
+    create_file(sb, index_to_fcb(sb, users_inode), "group5", DIRECTORY, 0);
+    create_file(sb, index_to_fcb(sb, users_inode), "group6", DIRECTORY, 0);
+    create_file(sb, index_to_fcb(sb, users_inode), "group7", ORDINARY_FILE, 0);
 
 
 
@@ -161,6 +160,34 @@ void show(free_block_list *fbl)
     }
 }
 
+void show_dirs(super_block *sb,fcb *fcb, size_t level)
+{
+    inode* files_inodes = (inode*) do_read(sb, fcb, 0);
+    for (int i=0; i<fcb->file_count; i++)
+    {
+        if (files_inodes[i].attribute == DIRECTORY)
+        {
+            for (int j=0; j<level; j++)
+            {
+                printf("    ");
+            }
+            printf("%s(dir)\n", files_inodes[i].filename);
+            show_dirs(sb, index_to_fcb(sb, files_inodes[i].inode_index), level+1);
+        }
+        else
+        {
+            for (int j=0; j<level; j++)
+            {
+                printf("    ");
+            }
+            printf("%s(file)\n", files_inodes[i].filename);
+        }
+
+    }
+    free(files_inodes);
+
+}
+
 
 int main()
 {
@@ -169,12 +196,8 @@ int main()
     ptrdiff_t delta;
     start_sys("disc.bak",&sb, 1);
     fcb* root = index_to_fcb(sb, sb->root_index);
-    inode *root_inode = (inode*) do_read(sb, root, 0);
-    for (size_t i=0;i<root->file_count;i++)
-    {
-        printf("%s\n", root_inode[i].filename);
-    }
+    printf("root(dir)\n");
+    show_dirs(sb, root, 1);
 
-    free(root_inode);
     return 0;
 }
