@@ -10,11 +10,10 @@
 
 
 
-void create_fcb(fcb *fcb, char *filename, unsigned char attribute, size_t length);
 
-int create_file(super_block *sb, fcb dir,char *filename, unsigned char attribute, size_t length);
+int create_file(super_block *sb, fcb *dir,char *filename, unsigned char attribute, size_t length);
 
-void apply_inode(super_block *sb, inode *inode, char *filename, unsigned char attribute);
+size_t apply_inode(super_block* fcb);
 
 user_open *my_open(char *fileName, int mode);
 

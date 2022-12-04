@@ -50,6 +50,7 @@ typedef struct FCB{
     char filename[256];
     // 0: directory, 1: file
     unsigned char attribute; // 文件属性 宏定义 ORDINARY_FILE 0 DIRECTORY 1
+    unsigned char is_used; // 在超级块的索引节点表中是否被使用
     struct tm create_time;
     struct tm last_modify_time;
 

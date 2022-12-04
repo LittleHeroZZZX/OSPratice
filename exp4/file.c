@@ -3,37 +3,42 @@
 //
 
 #include "file.h"
-void create_fcb(fcb *fcb, char *filename, unsigned char attribute, size_t length)
-{
-//    todo create fcb
-    strcpy(fcb->filename, filename);
-    fcb->attribute = attribute;
-    fcb->length = length;
-    time_t t = time(NULL);
-    fcb->create_time = *localtime(&t);
-    fcb->last_modify_time = *localtime(&t);
-}
+
 /**
  * 创建文件 创建文件控制块、申请磁盘块、创建inode
  * @param sb
- * @param dir 文件所在目录的fcb
+ * @param dir 文件所在目录的fcb 为NULL时创建根目录
  * @param filename 文件名
  * @param attribute 属性字段
  * @param length 文件大小（字节）
  */
-int create_file(super_block *sb, fcb dir,char *filename, unsigned char attribute, size_t length)
+int create_file(super_block *sb, fcb *dir,char *filename, unsigned char attribute, size_t length)
 {
+//    先申请磁盘块，然后申请inode，然后在inode对应的fcb中写入信息，然后在目录文件中写入该文件
+    if (length <= 0) return ERR_PARAM_INVALID;
     size_t block_cnt = (length+BLOCK_SIZE-1)/BLOCK_SIZE;
     size_t block_index = allocate_block(sb, block_cnt);
     if (block_index > 0)
     {
-        //        在目录中添加inode
-        inode inode;
-        inode.length = length;
-        inode.attribute = attribute;
-        strcpy(inode.filename, filename);
-//        inode.inode_index = block_index;
-//        dir_add_inode(sb, dir, inode);
+        size_t inode_index = apply_inode(sb);
+        if (inode_index == ERR_NOT_ENOUGH_INODE) return ERR_NOT_ENOUGH_INODE;
+        fcb *fcb = &(sb->fcb_array[inode_index]);
+        strcpy(fcb->filename, filename);
+        update_fcb(fcb, attribute, length);
+        if (dir != NULL) // 不是根目录
+        {
+            inode *inode = malloc(sizeof(inode));
+            strcpy(inode->filename, filename);
+            inode->length = length;
+            inode->attribute = attribute;
+            inode->inode_index = inode_index;
+            do_write(sb, dir, inode, sizeof(inode));
+            free(inode);
+        }
+    }
+    else
+    {
+        return block_cnt;
     }
 }
 
@@ -149,10 +154,20 @@ void do_write(super_block *sb, fcb *fcb, void *buff, size_t size)
     update_fcb(fcb, fcb->attribute, fcb->length + size);
 }
 
-
-void apply_inode(super_block *sb, inode *inode, char *filename, unsigned char attribute)
+/**
+ * 在超级块的索引节点表中申请一个空闲的索引节点
+ * @param fcb
+ * @return 节点编号
+ */
+size_t apply_inode(super_block* fcb)
 {
-
+    for (size_t i=0; i<INODE_MAX_COUNT; i++)
+        if (fcb->fcb_array[i].is_used == 0)
+        {
+            fcb->fcb_array[i].is_used = 1;
+            return i;
+        }
+    return ERR_NOT_ENOUGH_INODE;
 }
 /**
  * 保存文件的混合索引块
@@ -203,6 +218,12 @@ void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt)
 
 }
 
+/**
+ * @param fcb 文件控制块
+ * 更新文件fcb，该操作会更新文件的修改时间
+ * @param attribute 属性
+ * @param length 文件大小
+ */
 void update_fcb(fcb *fcb, unsigned char attribute, size_t length)
 {
     fcb->attribute = attribute;

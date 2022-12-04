@@ -106,6 +106,9 @@ void my_format(super_block ** p_sb)
 
 
     // 初始化根目录
+    size_t root_block_index = allocate_block(sb, 1);
+//    todo 先创建一个目录文件
+
 
 
 
