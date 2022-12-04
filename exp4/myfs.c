@@ -193,6 +193,7 @@ int main()
     super_block *sb;
     start_sys("disc.bak",&sb, 1);
     fcb* root = index_to_fcb(sb, sb->root_index);
+    current_dir = root;
     printf("root(dir)\n");
 //    show_dirs(sb, root, 1);
     size_t size = (LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT)*BLOCK_SIZE;
@@ -210,17 +211,8 @@ int main()
     do_write(sb, index_to_fcb(sb, inode_index), buff, size);
     memset(buff, 0, size);
     buff = do_read(sb, index_to_fcb(sb, inode_index), 0);
-    for (int i=0; i<size; i++)
-    {
-        printf("%d", buff[i]);
-        if (buff[i] != 1)
-        {
-
-            printf("error\n");
-            printf("i: %d, buff[i]: %d\n", i, buff[i]);
-            exit(1);
-        }
-    }
+    my_cd(sb,"/users/group5");
+    printf("%s",current_dir->filename);
     save("disc.bak", *sb, SIZE);
 
     return 0;

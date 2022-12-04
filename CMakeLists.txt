@@ -9,4 +9,10 @@ add_executable(OSPratice
         exp4/list.c
         exp4/list.h
         exp4/myfs.c
-        exp4/myfs.h exp4/block.h exp4/block.c exp4/file.c exp4/file.h exp4/types.h)
+        exp4/myfs.h
+        exp4/block.h
+        exp4/block.c
+        exp4/file.c
+        exp4/file.h
+        exp4/types.c
+        exp4/types.h)

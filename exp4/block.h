@@ -16,7 +16,13 @@ ssize_t allocate_block(super_block *sb, size_t block_count);
 void free_block(super_block *sb, size_t block_index, size_t block_count);
 void merge_block(free_block_list *fbl1, free_block_list *fbl2);
 void* index_to_addr(super_block *sb, size_t index);
-
+/**
+ * 根据文件路径返回对应FCB
+ * @param sb
+ * @param filePath
+ * @return
+ */
+fcb* findFcb(super_block *sb,char *filePath);
 __attribute__((unused)) size_t addr_to_index(super_block *sb, void *addr);
 
 #endif //BLOCK_H
