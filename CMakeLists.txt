@@ -16,3 +16,5 @@ add_executable(OSPratice
         exp4/file.h
         exp4/types.c
         exp4/types.h)
+)
+
