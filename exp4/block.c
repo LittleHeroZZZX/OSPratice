@@ -99,7 +99,12 @@ fcb* findFcb(super_block *sb,char *filePath){
         strcat(fullPath,current_dir);
         strcat(fullPath,filePath+2);
     } else if(!strncmp(filePath,"..",2)){
-
+        char temp[_MAX_PATH];
+        strcpy(temp,currentDir);
+        char *ptr = strrchr(temp, '/');
+        strncat(fullPath, currentDir, ptr-temp);
+        strcat(fullPath,filePath+2);
+        printf("%s\n",fullPath);
     } else{
         strcat(fullPath,current_dir);
         strcat(fullPath,filePath);
