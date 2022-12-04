@@ -119,6 +119,8 @@ void *do_read(super_block *sb,fcb *fcb, size_t size)
     size_t *blocks;
     void *buff;
     rest_size = size == 0 ? fcb->length : size;
+    setbuf(stdout, NULL);
+    printf("rest_size: %lld\n", rest_size);
     buff = malloc(rest_size);
     blocks = get_blocks(sb, fcb);
     size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -159,7 +161,7 @@ void do_write(super_block *sb, fcb *fcb, void *buff, size_t size)
     save_blocks(sb, fcb, new_blocks, (fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE);
     //  先保存blocks，再更新fcb大小
     update_fcb(fcb, fcb->attribute, fcb->length + size, fcb->file_count, 0);
-    free(new_blocks);
+
 }
 
 /**

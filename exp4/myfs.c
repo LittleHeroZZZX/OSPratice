@@ -191,10 +191,29 @@ int main()
 {
 
     super_block *sb;
-    start_sys("disc.bak",&sb, 0);
+    start_sys("disc.bak",&sb, 1);
     fcb* root = index_to_fcb(sb, sb->root_index);
     printf("root(dir)\n");
+//    show_dirs(sb, root, 1);
+//    size_t size = (LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT)*BLOCK_SIZE;
+    size_t size=1;
+    char *buff = (char *)malloc(size);
+
+    memset(buff, 1, size);
+//    for (int i=0; i<1025; i++)
+//    {
+//        printf("%d", buff[i]);
+//    }
+    size_t inode_index = create_file(sb, root, "test", ORDINARY_FILE, 0);
     show_dirs(sb, root, 1);
+    malloc(size);
+    do_write(sb, index_to_fcb(sb, inode_index), buff, size);
+    memset(buff, 0, size);
+    buff = do_read(sb, index_to_fcb(sb, inode_index), 0);
+    for (int i=0; i<size; i++)
+    {
+        printf("%d", buff[i]);
+    }
     save("disc.bak", *sb, SIZE);
 
     return 0;
