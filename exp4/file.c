@@ -93,15 +93,15 @@ size_t *get_blocks(super_block *sb, fcb *fcb)
     memcpy(blocks, fcb->mixed_index_block, sizeof(size_t) * (block_cnt<LEVEL0_BLOCK_CNT?block_cnt:LEVEL0_BLOCK_CNT));
     if (block_cnt > LEVEL0_BLOCK_CNT)
     {
-        memcpy(blocks + LEVEL0_BLOCK_CNT, index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT]), block_cnt<LEVEL1_BLOCK_CNT+LEVEL0_BLOCK_CNT?block_cnt-LEVEL0_BLOCK_CNT:LEVEL1_BLOCK_CNT);
+        memcpy(blocks + LEVEL0_BLOCK_CNT, index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT]), sizeof(size_t)*(block_cnt<LEVEL1_BLOCK_CNT+LEVEL0_BLOCK_CNT?block_cnt-LEVEL0_BLOCK_CNT:LEVEL1_BLOCK_CNT));
     }
     if (block_cnt > LEVEL1_BLOCK_CNT+LEVEL0_BLOCK_CNT)
     {
         block_cnt -= LEVEL1_BLOCK_CNT+LEVEL0_BLOCK_CNT;
         for (size_t i=0; i<block_cnt/(LEVEL1_BLOCK_CNT);i++)
-            memcpy(blocks + LEVEL0_BLOCK_CNT + LEVEL1_BLOCK_CNT + i*LEVEL1_BLOCK_CNT, index_to_addr(sb,((size_t*) index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT+1]))[i]), LEVEL1_BLOCK_CNT);
+            memcpy(blocks + LEVEL0_BLOCK_CNT + LEVEL1_BLOCK_CNT + i*LEVEL1_BLOCK_CNT, index_to_addr(sb,((size_t*) index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT+1]))[i]), LEVEL1_BLOCK_CNT*sizeof (size_t));
         if (block_cnt % LEVEL1_BLOCK_CNT != 0)
-            memcpy(blocks + LEVEL0_BLOCK_CNT + LEVEL1_BLOCK_CNT + block_cnt/(LEVEL1_BLOCK_CNT)*LEVEL1_BLOCK_CNT, index_to_addr(sb,((size_t*) index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT+1]))[block_cnt/(LEVEL1_BLOCK_CNT)]), block_cnt % LEVEL1_BLOCK_CNT);
+            memcpy(blocks + LEVEL0_BLOCK_CNT + LEVEL1_BLOCK_CNT + block_cnt/(LEVEL1_BLOCK_CNT)*LEVEL1_BLOCK_CNT, index_to_addr(sb,((size_t*) index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT+1]))[block_cnt/(LEVEL1_BLOCK_CNT)]), block_cnt % LEVEL1_BLOCK_CNT*sizeof (size_t));
     }
     return blocks;
 }
@@ -141,6 +141,7 @@ void *do_read(super_block *sb,fcb *fcb, size_t size)
  */
 void do_write(super_block *sb, fcb *fcb, void *buff, size_t size)
 {
+
     size_t *blocks, *new_blocks;
     size_t rest_size = size;
     size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;

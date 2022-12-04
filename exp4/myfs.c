@@ -213,6 +213,13 @@ int main()
     for (int i=0; i<size; i++)
     {
         printf("%d", buff[i]);
+        if (buff[i] != 1)
+        {
+
+            printf("error\n");
+            printf("i: %d, buff[i]: %d\n", i, buff[i]);
+            exit(1);
+        }
     }
     save("disc.bak", *sb, SIZE);
 
