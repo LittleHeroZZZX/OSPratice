@@ -7,7 +7,6 @@
 
 ssize_t allocate_block(super_block *sb, size_t block_count)
 {
-    // 分配盘块时，空出一个盘块，用于模拟真实情况
     size_t block = ERR_PARAM_INVALID;
     free_block_list *fb;
 

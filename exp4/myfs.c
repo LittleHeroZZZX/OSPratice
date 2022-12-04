@@ -101,20 +101,17 @@ void my_format(super_block ** p_sb)
         exit(1);
     }
     sb->fcb_array = index_to_addr(sb, fcb_array_block_index);
-    ssize_t fcb_index = create_file(sb, NULL, "/", DIRECTORY, 0);
+    ssize_t fcb_index = do_create_file(sb, NULL, "/", DIRECTORY, 0);
     if (fcb_index < 0)
     {
         printf("create root directory error\n");
         exit(1);
     }
     sb->root_index = fcb_index;
-    size_t users_inode =  create_file(sb, index_to_fcb(sb, fcb_index), "users", DIRECTORY, 0);
-    create_file(sb, index_to_fcb(sb, fcb_index), "groups", DIRECTORY, 0);
-    create_file(sb, index_to_fcb(sb, users_inode), "group4", DIRECTORY, 0);
-    create_file(sb, index_to_fcb(sb, users_inode), "group5", DIRECTORY, 0);
-    create_file(sb, index_to_fcb(sb, users_inode), "group6", DIRECTORY, 0);
-    create_file(sb, index_to_fcb(sb, users_inode), "group7", ORDINARY_FILE, 0);
-
+    size_t users_inode = create_dir(sb, index_to_fcb(sb, fcb_index), "users");
+    create_dir(sb, index_to_fcb(sb, users_inode), "root");
+    create_dir(sb, index_to_fcb(sb, users_inode), "guest");
+    create_dir(sb, index_to_fcb(sb, sb->root_index), "groups");
 
 
 
@@ -165,13 +162,15 @@ void show_dirs(super_block *sb,fcb *fcb, size_t level)
     for (int i=0; i<fcb->file_count; i++)
     {
         if (files_inodes[i].attribute == DIRECTORY)
+
         {
             for (int j=0; j<level; j++)
             {
                 printf("    ");
             }
             printf("%s(dir)\n", files_inodes[i].filename);
-            show_dirs(sb, index_to_fcb(sb, files_inodes[i].inode_index), level+1);
+            if (strcmp(files_inodes[i].filename, ".") != 0 && strcmp(files_inodes[i].filename, "..") != 0)
+                show_dirs(sb, index_to_fcb(sb, files_inodes[i].inode_index), level+1);
         }
         else
         {
@@ -179,7 +178,7 @@ void show_dirs(super_block *sb,fcb *fcb, size_t level)
             {
                 printf("    ");
             }
-            printf("%s(file)\n", files_inodes[i].filename);
+                printf("%s(file)\n", files_inodes[i].filename);
         }
     }
     free(files_inodes);
@@ -204,7 +203,11 @@ int main()
 {
 
     super_block *sb;
+    start_sys("disk", &sb, 1);
     save("disc.bak", *sb, SIZE);
+    create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
+    printf("/(dir)\n");
+    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
 
     return 0;
 }

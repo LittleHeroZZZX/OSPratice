@@ -14,7 +14,7 @@ extern fcb *current_dir;
  * @param length 文件大小（字节）
  * @return inode序号
  */
-ssize_t create_file(super_block *sb, fcb *dir,char *filename, unsigned char attribute, size_t length)
+ssize_t do_create_file(super_block *sb, fcb *dir, char *filename, unsigned char attribute, size_t length)
 {
 //    先申请磁盘块，然后申请inode，然后在inode对应的fcb中写入信息，然后在目录文件中写入该文件
     size_t block_cnt = (length+BLOCK_SIZE-1)/BLOCK_SIZE;
@@ -31,7 +31,6 @@ ssize_t create_file(super_block *sb, fcb *dir,char *filename, unsigned char attr
         {
             inode *new_inode = malloc(sizeof(inode));
             strcpy(new_inode->filename, filename);
-            new_inode->length = length;
             new_inode->attribute = attribute;
             new_inode->inode_index = inode_index;
             do_write(sb, dir, new_inode, sizeof(inode));
@@ -126,7 +125,6 @@ void *do_read(super_block *sb,fcb *fcb, size_t size)
     void *buff;
     rest_size = size == 0 ? fcb->length : size;
     setbuf(stdout, NULL);
-    printf("rest_size: %lld\n", rest_size);
     buff = malloc(rest_size);
     blocks = get_blocks(sb, fcb);
     size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -270,4 +268,31 @@ void my_cat(super_block *sb, fcb *fcb)
     buf = do_read(sb, fcb, 0);
     for (size_t i=0; i<fcb->length; i++)
         printf("%c", buf[i]);
+}
+
+/**
+ * 创建目录文件  包括向目录文件中写入.和..两个目录项
+ * @param sb  超级块
+ * @param dir 上级目录
+ * @param name 目录名
+ * @return 创建的inode
+ */
+ssize_t create_dir(super_block *sb, fcb *dir, char *filename)
+{
+    ssize_t index = do_create_file(sb, dir, filename, DIRECTORY, 0);
+    if (index < 0)  return index;
+    fcb *fcb = index_to_fcb(sb, index);
+    fcb->file_count = 2;
+    size_t dir_index[2];
+    inode dir_inode[2];
+    dir_index[0] = index;
+    dir_index[1] = *(size_t *) do_read(sb, dir, sizeof (size_t));
+    strcpy(dir_inode[0].filename, ".");
+    strcpy(dir_inode[1].filename, "..");
+    dir_inode[0].attribute = DIRECTORY;
+    dir_inode[1].attribute = DIRECTORY;
+    dir_inode[0].inode_index = dir_index[0];
+    dir_inode[1].inode_index = dir_index[1];
+    do_write(sb, fcb, (char *) dir_inode, 2 * sizeof (inode));
+    return index;
 }
