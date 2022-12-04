@@ -53,6 +53,7 @@ typedef struct FCB{
     unsigned char is_used; // 在超级块的索引节点表中是否被使用
     struct tm create_time;
     struct tm last_modify_time;
+    size_t file_count; // 目录下文件数量
 
     size_t mixed_index_block[INDEX_CNT]; // 混合索引块，前10个直接索引块，1第1个一级索引块，第12个二级索引块
     size_t length;
@@ -82,7 +83,7 @@ typedef struct super_block
     // 文件系统在内存中的起始地址
     void *start_pos;
     free_block_list free_block_list;
-    inode root;
+    size_t root_index;
 } super_block;
 
 typedef struct user_open{

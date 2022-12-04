@@ -105,9 +105,19 @@ void my_format(super_block ** p_sb)
 
 
 
-    // 初始化根目录
-    size_t root_block_index = allocate_block(sb, 1);
+
 //    todo 先创建一个目录文件
+    size_t fcb_index = create_file(sb, NULL, "/", DIRECTORY, 0);
+    if (fcb_index < 0)
+    {
+        printf("create root directory error\n");
+        exit(1);
+    }
+    sb->root_index = fcb_index;
+    create_file(sb, index_to_fcb(sb, fcb_index), "users", DIRECTORY, 0);
+
+
+
 
 
 
@@ -158,9 +168,13 @@ int main()
     super_block *sb;
     ptrdiff_t delta;
     start_sys("disc.bak",&sb, 1);
-    show(&sb->free_block_list);
-    save("disc.bak", *sb, SIZE);
+    fcb* root = index_to_fcb(sb, sb->root_index);
+    inode *root_inode = (inode*) do_read(sb, root, 0);
+    for (size_t i=0;i<root->file_count;i++)
+    {
+        printf("%s\n", root_inode[i].filename);
+    }
 
-    show(&sb->free_block_list);
+    free(root_inode);
     return 0;
 }
