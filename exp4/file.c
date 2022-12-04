@@ -145,7 +145,7 @@ void do_write(super_block *sb, fcb *fcb, void *buff, size_t size)
     size_t rest_size = size;
     size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
     blocks = get_blocks(sb, fcb);
-    new_blocks = (size_t *)malloc((fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    new_blocks = (size_t *)malloc((fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE * sizeof(size_t));
     memcpy(new_blocks, blocks, sizeof(size_t) * block_cnt);
     if (block_cnt > 0) {
         memcpy(index_to_addr(sb, new_blocks[block_cnt - 1]) + fcb->length % BLOCK_SIZE, buff,
