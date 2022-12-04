@@ -208,7 +208,10 @@ int main()
     create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
     printf("/(dir)\n");
     show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-
+    my_cd(sb,"/users/guest");
+    printf("%s\n",current_dir_name);
+    printf("%s\n",current_dir->filename);
+    printf("%s\n", my_open(sb,"..","rw+")->f_fcb->filename);
     return 0;
 }
 

@@ -23,6 +23,7 @@ void* index_to_addr(super_block *sb, size_t index);
  * @return
  */
 fcb* findFcb(super_block *sb,char *filePath);
+void getFullPath(char *DestFullPath,char* filePath);
 __attribute__((unused)) size_t addr_to_index(super_block *sb, void *addr);
 
 #endif //BLOCK_H

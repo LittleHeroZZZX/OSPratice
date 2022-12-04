@@ -84,8 +84,8 @@ void merge_block(free_block_list *fbl1, free_block_list *fbl2)
     list_del(&fbl2->list);
 }
 
-fcb* findFcb(super_block *sb,char *filePath){
-    char *currentDir=current_dir->filename;
+void getFullPath(char *DestFullPath,char* filePath){
+    char *currentDir=current_dir_name;
     char dir[_MAX_DIR];
     char fname[_MAX_FNAME];
     char ext[_MAX_EXT];
@@ -96,7 +96,7 @@ fcb* findFcb(super_block *sb,char *filePath){
     if(filePath[0]=='/'){
         strcpy(fullPath,filePath);
     } else if(!strncmp(filePath,"./",2)){
-        strcat(fullPath,current_dir);
+        strcat(fullPath,currentDir);
         strcat(fullPath,filePath+2);
     } else if(!strncmp(filePath,"..",2)){
         char temp[_MAX_PATH];
@@ -104,12 +104,17 @@ fcb* findFcb(super_block *sb,char *filePath){
         char *ptr = strrchr(temp, '/');
         strncat(fullPath, currentDir, ptr-temp);
         strcat(fullPath,filePath+2);
-        printf("%s\n",fullPath);
     } else{
-        strcat(fullPath,current_dir);
+        strcat(fullPath,currentDir);
         strcat(fullPath,filePath);
     }
-//    printf("%s",fullPath);
+    strcpy(DestFullPath,fullPath);
+}
+
+fcb* findFcb(super_block *sb,char *filePath){
+    char fullPath[_MAX_PATH];
+    getFullPath(fullPath,filePath);
+    printf("%s\n",fullPath);
     fcb* ptr = index_to_fcb(sb, sb->root_index);
     int flag=0;
     char *token = strtok(fullPath,"/");

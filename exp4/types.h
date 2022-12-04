@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include "stdlib.h"
 #include "list.h"
 
 
@@ -96,5 +97,5 @@ typedef struct user_open{
 
 
 extern fcb* current_dir;
-
+extern char current_dir_name[_MAX_PATH];
 #endif //OSPRATICE_TYPES_H

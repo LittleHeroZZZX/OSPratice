@@ -80,6 +80,7 @@ void *my_cd(super_block *sb, char *filePath){
     fcb* fcb = findFcb(sb,filePath);
     if (fcb!=NULL){
         current_dir = fcb;
+        getFullPath(current_dir_name, filePath);
     } else{
         printf("There is no such directory!");
     }
