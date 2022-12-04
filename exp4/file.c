@@ -256,3 +256,12 @@ fcb* index_to_fcb(super_block *sb, size_t index)
 {
     return &sb->fcb_array[index];
 }
+
+
+void my_cat(super_block *sb, fcb *fcb)
+{
+    char *buf = malloc(fcb->length + 1);
+    buf = do_read(sb, fcb, 0);
+    for (size_t i=0; i<fcb->length; i++)
+        printf("%c", buf[i]);
+}

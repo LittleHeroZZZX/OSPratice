@@ -191,7 +191,7 @@ int main()
 {
 
     super_block *sb;
-    start_sys("disc.bak",&sb, 1);
+    start_sys("disc.bak",&sb, 0);
     fcb* root = index_to_fcb(sb, sb->root_index);
     printf("root(dir)\n");
 //    show_dirs(sb, root, 1);
