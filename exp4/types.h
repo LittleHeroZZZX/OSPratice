@@ -13,7 +13,7 @@
 extern char* current_dir;
 
 #define BLOCK_SIZE 1024
-#define SIZE 512*1024*1024
+#define SIZE (512*1024*1024)
 #define FILENAME_LEN 255
 #define DIR_MAX_COUNT ((BLOCK_SIZE-sizeof(size_t))/sizeof(inode))
 #define FILE_MAX_COUNT 1024
@@ -31,12 +31,12 @@ extern char* current_dir;
 #define LEVEL1_BLOCK_CNT (LEVEL1_INDEX_CNT*BLOCK_SIZE/sizeof(size_t))
 #define LEVEL2_BLOCK_CNT (LEVEL2_INDEX_CNT*BLOCK_SIZE/sizeof(size_t)*BLOCK_SIZE/sizeof(size_t))
 
-#define MAX_FILE_SIZE (LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT+LEVEL2_BLOCK_CNT)*BLOCK_SIZE
+#define MAX_FILE_SIZE ((LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT+LEVEL2_BLOCK_CNT)*BLOCK_SIZE)
 
 
-#define ERR_NOT_ENOUGH_SPACE -1
-#define ERR_PARAM_INVALID -2
-#define ERR_NOT_ENOUGH_INODE -3
+#define ERR_NOT_ENOUGH_SPACE (-1)
+#define ERR_PARAM_INVALID (-2)
+#define ERR_NOT_ENOUGH_INODE (-3)
 typedef struct free_block_list
 {
     struct list_head list;
@@ -60,17 +60,11 @@ typedef struct FCB{
 }fcb;
 typedef struct inode{
     char filename[255];
-    size_t length;
     size_t inode_index;
     // 0: directory, 1: file
     unsigned char attribute;
 } inode;
 
-typedef struct dir
-{
-    size_t file_count;
-    inode files[DIR_MAX_COUNT];
-};
 
 typedef struct super_block
 {
