@@ -35,4 +35,6 @@ void *my_cd(super_block *sb, char *filePath);
 
 fcb* index_to_fcb(super_block *sb, size_t index);
 
+void do_cat(super_block *sb, fcb *fcb);
+
 
