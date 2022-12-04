@@ -64,6 +64,30 @@ user_open *my_open(super_block *sb, char *filePath, char* mode){
     strcpy(userOpen->mode,mode);
     return userOpen;
 }
+/**
+ * 打印对应目录下的的所有文件
+ * @param sb
+ * @param filePath
+ * @return
+ */
+void * my_ls(super_block *sb,char *filePath){
+    fcb *DestFcb;
+    if(filePath==NULL){
+        strcpy(filePath, current_dir_name);
+        DestFcb = current_dir;
+    } else{
+        DestFcb == findFcb(sb,filePath);
+        if(DestFcb==NULL||DestFcb->attribute==ORDINARY_FILE){
+            printf("There is no such file!");
+        }
+    }
+    printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
+    inode *ptrInode=(inode *) do_read(sb,DestFcb,0);
+    for (int i = 0; i < DestFcb->file_count; ++i) {
+        fcb* ptr=index_to_fcb(sb,ptrInode[i].inode_index);
+        printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t\n",ptr[i].filename,ptr[i].length,ptr[i].attribute,ptr[i].create_time,ptr[i].last_modify_time);
+    }
+}
 
 void my_fread(user_open *_user_open, char *buf,size_t size)
 {
@@ -85,6 +109,7 @@ void *my_cd(super_block *sb, char *filePath){
         printf("There is no such directory!");
     }
 }
+
 /**
  * 根据fcb获取存放文件的所有磁盘块号
  * @param sb 超级块

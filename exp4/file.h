@@ -17,6 +17,8 @@ ssize_t apply_inode(super_block* fcb);
 
 user_open *my_open(super_block *sb, char *filePath, char* mode);
 
+void * my_ls(super_block *sb,char *filePath);
+
 void *do_read(super_block *sb,fcb *fcb, size_t size);
 
 void do_write(super_block *sb, fcb *fcb, void *buff, size_t size);
