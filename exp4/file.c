@@ -13,16 +13,15 @@
  * @param length 文件大小（字节）
  * @return inode序号
  */
-int create_file(super_block *sb, fcb *dir,char *filename, unsigned char attribute, size_t length)
+ssize_t create_file(super_block *sb, fcb *dir,char *filename, unsigned char attribute, size_t length)
 {
 //    先申请磁盘块，然后申请inode，然后在inode对应的fcb中写入信息，然后在目录文件中写入该文件
-    if (length < 0) return ERR_PARAM_INVALID;
     size_t block_cnt = (length+BLOCK_SIZE-1)/BLOCK_SIZE;
     if (block_cnt == 0) block_cnt = 1;
-    size_t block_index = allocate_block(sb, block_cnt);
+    ssize_t block_index = allocate_block(sb, block_cnt);
     if (block_index >= 0)
     {
-        size_t inode_index = apply_inode(sb);
+        ssize_t inode_index = apply_inode(sb);
         if (inode_index == ERR_NOT_ENOUGH_INODE) return ERR_NOT_ENOUGH_INODE;
         fcb *fcb = &(sb->fcb_array[inode_index]);
         strcpy(fcb->filename, filename);
@@ -43,7 +42,7 @@ int create_file(super_block *sb, fcb *dir,char *filename, unsigned char attribut
     }
     else
     {
-        return block_cnt;
+        return block_index;
     }
 }
 
@@ -54,7 +53,7 @@ int create_file(super_block *sb, fcb *dir,char *filename, unsigned char attribut
  * @param mode 打开模式（r/w/w+/rw/o/a）
  * @return
  */
-user_open *my_open(char *fileName, int mode){
+__attribute__((unused)) user_open *my_open(char *fileName, __attribute__((unused)) int mode){
     extern char *current_dir;
     const char ch = '/';
     char *realFileName = strrchr(fileName, ch);
@@ -141,7 +140,7 @@ void *do_read(super_block *sb,fcb *fcb, size_t size)
 void do_write(super_block *sb, fcb *fcb, void *buff, size_t size)
 {
     size_t *blocks, *new_blocks;
-    ssize_t rest_size = size;
+    size_t rest_size = size;
     size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
     blocks = get_blocks(sb, fcb);
     new_blocks = (size_t *)malloc((fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE);
@@ -168,9 +167,9 @@ void do_write(super_block *sb, fcb *fcb, void *buff, size_t size)
  * @param fcb
  * @return 节点编号
  */
-size_t apply_inode(super_block* fcb)
+ssize_t apply_inode(super_block* fcb)
 {
-    for (size_t i=0; i<INODE_MAX_COUNT; i++)
+    for (ssize_t i=0; i<INODE_MAX_COUNT; i++)
         if (fcb->fcb_array[i].is_used == 0)
         {
             fcb->fcb_array[i].is_used = 1;

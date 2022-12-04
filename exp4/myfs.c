@@ -23,7 +23,7 @@ void recover(super_block **sb, char *bak_file)
         printf("malloc error\n");
         exit(1);
     }
-    int cnt = fread(fs, 1, SIZE, fp);
+    size_t cnt = fread(fs, 1, SIZE, fp);
     if (cnt != SIZE)
     {
         perror("fread error");
@@ -33,8 +33,8 @@ void recover(super_block **sb, char *bak_file)
     delta = (char*)fs - (char*)(*sb)->start_pos;
     (*sb)->start_pos = fs;
     free_block_list *p_fbl = &(*sb)->free_block_list;
-    update_list(p_fbl, list, delta);
-    (*sb)->fcb_array = (char*)(*sb)->fcb_array + delta;
+    update_list(p_fbl, list, delta)
+    (*sb)->fcb_array = (void*)(*sb)->fcb_array + delta;
     fclose(fp);
 }
 
@@ -88,11 +88,11 @@ void my_format(super_block ** p_sb)
     sb->block_count = (SIZE - sizeof(super_block)) / BLOCK_SIZE;
     sb->free_block_count = sb->block_count;
     sb->free_block_list_index = SIZE/BLOCK_SIZE - sb->block_count;
-    INIT_LIST_HEAD(&sb->free_block_list);
+    INIT_LIST_HEAD(&sb->free_block_list.list);
     fb_node = (free_block_list *)(fs + sb->free_block_list_index*BLOCK_SIZE);
     fb_node->block_index = sb->free_block_list_index;
     fb_node->count = sb->block_count;
-    list_add(&fb_node->list, &sb->free_block_list);
+    list_add(&fb_node->list, &sb->free_block_list.list);
 
     size_t fcb_array_block_index = allocate_block(sb, (sizeof(fcb)*INODE_MAX_COUNT+BLOCK_SIZE-1)/BLOCK_SIZE);
     if (fcb_array_block_index != 1)
@@ -101,7 +101,7 @@ void my_format(super_block ** p_sb)
         exit(1);
     }
     sb->fcb_array = index_to_addr(sb, fcb_array_block_index);
-    size_t fcb_index = create_file(sb, NULL, "/", DIRECTORY, 0);
+    ssize_t fcb_index = create_file(sb, NULL, "/", DIRECTORY, 0);
     if (fcb_index < 0)
     {
         printf("create root directory error\n");
@@ -150,13 +150,12 @@ void save(char *bak_file, super_block sb, size_t size)
 }
 
 
-
-void show(free_block_list *fbl)
+__attribute__((unused)) void show(free_block_list *fbl)
 {
     free_block_list *p;
     list_for_each_entry(p, &fbl->list, list)
     {
-        printf("block_index: %d, count: %d\n", p->block_index, p->count);
+        printf("block_index: %lld, count: %lld\n", p->block_index, p->count);
     }
 }
 
@@ -182,7 +181,6 @@ void show_dirs(super_block *sb,fcb *fcb, size_t level)
             }
             printf("%s(file)\n", files_inodes[i].filename);
         }
-
     }
     free(files_inodes);
 
@@ -193,11 +191,11 @@ int main()
 {
 
     super_block *sb;
-    ptrdiff_t delta;
-    start_sys("disc.bak",&sb, 1);
+    start_sys("disc.bak",&sb, 0);
     fcb* root = index_to_fcb(sb, sb->root_index);
     printf("root(dir)\n");
     show_dirs(sb, root, 1);
+    save("disc.bak", *sb, SIZE);
 
     return 0;
 }

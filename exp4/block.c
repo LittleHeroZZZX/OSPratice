@@ -4,7 +4,7 @@
 
 #include "block.h"
 
-size_t allocate_block(super_block *sb, size_t block_count)
+ssize_t allocate_block(super_block *sb, size_t block_count)
 {
     // 分配盘块时，空出一个盘块，用于模拟真实情况
     size_t block = ERR_PARAM_INVALID;
@@ -34,7 +34,7 @@ size_t allocate_block(super_block *sb, size_t block_count)
                 fb->count -= block_count;
                 fb->block_index += block_count;
                 memcpy((char*)fb + block_count * BLOCK_SIZE, fb, sizeof(free_block_list));
-                list_add(&(((free_block_list *) ((char*)fb + block_count * BLOCK_SIZE))->list), fb);
+                list_add(&(((free_block_list *) ((char*)fb + block_count * BLOCK_SIZE))->list), &fb->list);
                 list_del(&fb->list);
             }
             break;
@@ -49,12 +49,12 @@ void* index_to_addr(super_block *sb, size_t index)
     return sb->start_pos + index * BLOCK_SIZE;
 }
 
-size_t addr_to_index(super_block *sb, void *addr)
+__attribute__((unused)) size_t addr_to_index(super_block *sb, void *addr)
 {
     return (addr - sb->start_pos) / BLOCK_SIZE;
 }
 
-size_t free_block(super_block *sb, size_t block_index, size_t block_count)
+void free_block(super_block *sb, size_t block_index, size_t block_count)
 {
     free_block_list * block = (free_block_list *) index_to_addr(sb, block_index);
     free_block_list *fb = block;
