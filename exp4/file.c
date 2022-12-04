@@ -159,7 +159,6 @@ void do_write(super_block *sb, fcb *fcb, void *buff, size_t size)
     save_blocks(sb, fcb, new_blocks, (fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE);
     //  先保存blocks，再更新fcb大小
     update_fcb(fcb, fcb->attribute, fcb->length + size, fcb->file_count, 0);
-    free(new_blocks);
 }
 
 /**
