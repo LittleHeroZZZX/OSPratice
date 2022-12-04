@@ -204,8 +204,6 @@ int main()
 {
 
     super_block *sb;
-    start_sys("disc.bak",&sb, 1);
-    introduce(sb);
     save("disc.bak", *sb, SIZE);
 
     return 0;

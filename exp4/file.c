@@ -4,6 +4,7 @@
 
 #include "file.h"
 
+extern fcb *current_dir;
 /**
  * 创建文件 创建文件控制块、申请磁盘块、创建inode
  * @param sb
@@ -48,20 +49,21 @@ ssize_t create_file(super_block *sb, fcb *dir,char *filename, unsigned char attr
 
 
 /**
- * 打开文件
- * @param fileName 文件名及路径
- * @param mode 打开模式（r/w/w+/rw/o/a）
+ *
+ * @param sb
+ * @param filePath 文件路径
+ * @param mode 打开模式（r/w/rw/a/o)
  * @return
  */
-__attribute__((unused)) user_open *my_open(char *fileName, __attribute__((unused)) int mode){
-    extern char *current_dir;
-    const char ch = '/';
-    char *realFileName = strrchr(fileName, ch);
-    if(realFileName == NULL){
-
-    }else{
-
+user_open *my_open(super_block *sb, char *filePath, char* mode){
+    user_open *userOpen = (user_open *) malloc(sizeof (user_open));
+    userOpen->f_fcb = findFcb(sb,filePath);
+    if(userOpen->f_fcb==NULL||userOpen->f_fcb->attribute==DIRECTORY){
+        printf("There is no such file!");
+        return NULL;
     }
+    strcpy(userOpen->mode,mode);
+    return userOpen;
 }
 
 void my_fread(user_open *_user_open, char *buf,size_t size)
@@ -75,9 +77,13 @@ void my_fwrite(char *buf, size_t size, user_open *_user_open)
 }
 
 
-void my_cd(char* dir)
-{
-    // ToDo
+void *my_cd(super_block *sb, char *filePath){
+    fcb* fcb = findFcb(sb,filePath);
+    if (fcb!=NULL){
+        current_dir = fcb;
+    } else{
+        printf("There is no such directory!");
+    }
 }
 /**
  * 根据fcb获取存放文件的所有磁盘块号

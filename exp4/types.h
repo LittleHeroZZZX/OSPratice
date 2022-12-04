@@ -10,7 +10,7 @@
 #include <time.h>
 #include "list.h"
 
-extern char* current_dir;
+
 
 #define BLOCK_SIZE 1024
 #define SIZE (512*1024*1024)
@@ -21,6 +21,7 @@ extern char* current_dir;
 
 #define ORDINARY_FILE 0
 #define DIRECTORY 1
+
 
 // 索引块数量以及分布
 #define LEVEL0_INDEX_CNT 10
@@ -33,10 +34,13 @@ extern char* current_dir;
 
 #define MAX_FILE_SIZE ((LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT+LEVEL2_BLOCK_CNT)*BLOCK_SIZE)
 
+#define pwd current_dir;
 
 #define ERR_NOT_ENOUGH_SPACE (-1)
 #define ERR_PARAM_INVALID (-2)
 #define ERR_NOT_ENOUGH_INODE (-3)
+
+
 typedef struct free_block_list
 {
     struct list_head list;
@@ -89,5 +93,8 @@ typedef struct user_open{
     unsigned char pcb_modified;
     unsigned char is_empty;
 }user_open;
+
+
+extern fcb* current_dir;
 
 #endif //OSPRATICE_TYPES_H

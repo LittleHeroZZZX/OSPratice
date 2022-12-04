@@ -1,1 +1,2 @@
-char* current_dir="/";
+#include "types.h"
+fcb* current_dir;
