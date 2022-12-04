@@ -13,7 +13,7 @@
 extern char* current_dir;
 
 #define BLOCK_SIZE 1024
-#define SIZE 102400000
+#define SIZE 512*1024*1024
 #define FILENAME_LEN 255
 #define DIR_MAX_COUNT ((BLOCK_SIZE-sizeof(size_t))/sizeof(inode))
 #define FILE_MAX_COUNT 1024
@@ -31,7 +31,7 @@ extern char* current_dir;
 #define LEVEL1_BLOCK_CNT (LEVEL1_INDEX_CNT*BLOCK_SIZE/sizeof(size_t))
 #define LEVEL2_BLOCK_CNT (LEVEL2_INDEX_CNT*BLOCK_SIZE/sizeof(size_t)*BLOCK_SIZE/sizeof(size_t))
 
-#define MAX_FILE_SIZE (LEVEL0_INDEX_CNT*BLOCK_SIZE+LEVEL1_INDEX_CNT*BLOCK_SIZE/sizeof(size_t)+LEVEL2_INDEX_CNT*BLOCK_SIZE/sizeof(size_t)/sizeof(size_t))
+#define MAX_FILE_SIZE (LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT+LEVEL2_BLOCK_CNT)*BLOCK_SIZE
 
 
 #define ERR_NOT_ENOUGH_SPACE -1

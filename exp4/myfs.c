@@ -85,13 +85,13 @@ void my_format(super_block ** p_sb)
     
     super_block *sb = (super_block *)fs;
     sb->start_pos = fs;
-    sb->block_count = (SIZE - sizeof(super_block)) / BLOCK_SIZE;
-    sb->free_block_count = sb->block_count;
-    sb->free_block_list_index = SIZE/BLOCK_SIZE - sb->block_count;
+    sb->block_count = SIZE / BLOCK_SIZE;
+    sb->free_block_count = (SIZE - sizeof(super_block)) / BLOCK_SIZE;
+    sb->free_block_list_index = SIZE/BLOCK_SIZE - sb->free_block_count;
     INIT_LIST_HEAD(&sb->free_block_list.list);
     fb_node = (free_block_list *)(fs + sb->free_block_list_index*BLOCK_SIZE);
     fb_node->block_index = sb->free_block_list_index;
-    fb_node->count = sb->block_count;
+    fb_node->count = sb->free_block_count;
     list_add(&fb_node->list, &sb->free_block_list.list);
 
     size_t fcb_array_block_index = allocate_block(sb, (sizeof(fcb)*INODE_MAX_COUNT+BLOCK_SIZE-1)/BLOCK_SIZE);
@@ -185,43 +185,29 @@ void show_dirs(super_block *sb,fcb *fcb, size_t level)
     free(files_inodes);
 
 }
+void introduce(super_block *sb)
+{
+    printf("******************************************\n");
+    printf("******************************************\n");
+    printf("%-20s: %lldMB %lldKB\n", "disk space size", sb->block_count*BLOCK_SIZE/1024/1024/1024, sb->block_count*BLOCK_SIZE/1024/1024%1024, sb->block_count*BLOCK_SIZE/1024%1024);
+    printf("%-20s: %lldMB %lldKB\n", "free space size", sb->free_block_count*BLOCK_SIZE/1024/1024/1024, sb->free_block_count*BLOCK_SIZE/1024/1024%1024, sb->free_block_count*BLOCK_SIZE/1024%1024);
+    printf("%-20s: %lldKB\n", "block size", BLOCK_SIZE/1024);
+    printf("%-20s: %lldMB %lldKB \n", "max file size", MAX_FILE_SIZE/1024/1024/1024, MAX_FILE_SIZE/1024/1024%1024, MAX_FILE_SIZE/1024%1024);
 
+    printf("******************************************\n");
+    printf("******************************************\n");
+
+
+}
 
 int main()
 {
 
     super_block *sb;
-    start_sys("disc.bak",&sb, 0);
-    fcb* root = index_to_fcb(sb, sb->root_index);
-    printf("root(dir)\n");
-//    show_dirs(sb, root, 1);
-    size_t size = (LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT)*BLOCK_SIZE;
-//    size_t size=1;
-    char *buff = (char *)malloc(size);
-
-    memset(buff, 1, size);
-//    for (int i=0; i<1025; i++)
-//    {
-//        printf("%d", buff[i]);
-//    }
-    size_t inode_index = create_file(sb, root, "test", ORDINARY_FILE, 0);
-    show_dirs(sb, root, 1);
-    malloc(size);
-    do_write(sb, index_to_fcb(sb, inode_index), buff, size);
-    memset(buff, 0, size);
-    buff = do_read(sb, index_to_fcb(sb, inode_index), 0);
-    for (int i=0; i<size; i++)
-    {
-        printf("%d", buff[i]);
-        if (buff[i] != 1)
-        {
-
-            printf("error\n");
-            printf("i: %d, buff[i]: %d\n", i, buff[i]);
-            exit(1);
-        }
-    }
+    start_sys("disc.bak",&sb, 1);
+    introduce(sb);
     save("disc.bak", *sb, SIZE);
 
     return 0;
 }
+
