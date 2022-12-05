@@ -86,12 +86,12 @@ void* my_ls(super_block* sb, char* filePath)
 	{
 		printf("There is no such file!");
 	}
-	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
+	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n\n");
 	inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 	for (int i = 0; i < dirFcb->file_count; ++i)
 	{
 		fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-		printf("%s\t\t%d\t%s\t%d.%d.%d %d:%d\t%d.%d.%d %d:%d\t\n", ptr->filename, ptr->length,
+		printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n", ptr->filename, ptr->length,
 			ptr->attribute == 1 ? "directory" : "file", ptr[i].create_time.tm_year + BASE_YEAR,
 			ptr->create_time.tm_mon, ptr->create_time.tm_mday, ptr->create_time.tm_hour, ptr->create_time.tm_min,
 			ptr[i].last_modify_time.tm_year + BASE_YEAR, ptr->last_modify_time.tm_mon, ptr->last_modify_time.tm_mday,
@@ -485,4 +485,45 @@ ssize_t create_file(super_block* sb, fcb* dir, char* filename, size_t size, void
 	if (size > 0)
 		do_write(sb, fcb, content, size);
 	return index;
+}
+
+ssize_t delete_file(super_block *sb, fcb *fcb, struct FCB* dir) {
+//    todo
+    if (fcb->attribute == DIRECTORY) {
+        if (fcb->file_count > 2) {
+            printf("directory is not empty\n");
+            return ERR_PARAM_INVALID;
+        } else {
+            fcb->file_count = 0;
+            fcb->length = 0;
+            fcb->attribute = 0;
+            dir->file_count--;
+            return 0;
+        }
+    }
+}
+
+void clear_file(super_block *sb, fcb *fcb)
+{
+//    todo
+
+}
+
+
+
+/**
+ * 根据目录文件的fcb获取目录文件的索引节点号
+ * @param sb 超级块
+ * @param fcb 文件控制块
+ * @return 目录文件的索引节点号
+ */
+ssize_t dir_fcb_to_index(super_block *sb, fcb *fcb)
+{
+//    todo
+    if (fcb->attribute != DIRECTORY)
+        return ERR_PARAM_INVALID;
+    inode *inodes = (inode *) do_read(sb, fcb, sizeof (inode));
+    ssize_t index = inodes[0].inode_index;
+    free(inodes);
+    return index;
 }

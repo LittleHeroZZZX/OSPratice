@@ -39,7 +39,12 @@ void *my_cd(super_block *sb, char *filePath);
 
 fcb *index_to_fcb(super_block *sb, size_t index);
 
+ssize_t dir_fcb_to_index(super_block *sb, fcb *fcb);
+
 void my_cat(super_block *sb, fcb *fcb);
 
+ssize_t delete_file(super_block *sb, fcb *fcb, struct FCB* dir);
+
+void clear_file(super_block *sb, fcb *fcb);
 
 
