@@ -75,28 +75,26 @@ user_open* my_open(super_block* sb, char* filePath, int mode)
  */
 void* my_ls(super_block* sb, char* filePath)
 {
-	fcb* DestFcb;
 	if (filePath == NULL)
 	{
+        filePath = (char*) malloc(sizeof (char)*_MAX_PATH);
 		strcpy(filePath, current_dir_name);
-		DestFcb = current_dir;
 	}
-	else
-	{
-		DestFcb == findFcb(sb, filePath);
-		if (DestFcb == NULL || DestFcb->attribute == ORDINARY_FILE)
-		{
-			printf("There is no such file!");
-		}
-	}
+    fcb* DestFcb = findFcb(sb, filePath);
+    if (DestFcb == NULL || DestFcb->attribute == ORDINARY_FILE)
+    {
+        printf("There is no such file!");
+    }
 	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
 	inode* ptrInode = (inode*)do_read(sb, DestFcb, 0);
 	for (int i = 0; i < DestFcb->file_count; ++i)
 	{
 		fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-		printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t\n", ptr[i].filename, ptr[i].length, ptr[i].attribute, ptr[i].create_time,
-			ptr[i].last_modify_time);
+		printf("%s\t\t%d\t%s\t%d.%d.%d %d:%d\t%d.%d.%d %d:%d\t\n", ptr->filename, ptr->length, ptr->attribute==1?"directory":"file"
+               ,ptr[i].create_time.tm_year+BASE_YEAR, ptr->create_time.tm_mon, ptr->create_time.tm_mday, ptr->create_time.tm_hour, ptr->create_time.tm_min
+               , ptr[i].last_modify_time.tm_year+BASE_YEAR, ptr->last_modify_time.tm_mon, ptr->last_modify_time.tm_mday, ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
 	}
+    free(filePath);
 }
 
 void* my_cd(super_block* sb, char* filePath)
