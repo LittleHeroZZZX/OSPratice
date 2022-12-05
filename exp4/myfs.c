@@ -108,6 +108,11 @@ void my_format(super_block** p_sb)
 		exit(1);
 	}
 	sb->root_index = fcb_index;
+    inode root_dot;
+    root_dot.inode_index = fcb_index;
+    root_dot.attribute = DIRECTORY;
+    strcpy(root_dot.filename, ".");
+    do_write(sb, index_to_fcb(sb, fcb_index), &root_dot, sizeof(inode));
 	size_t users_inode = create_dir(sb, index_to_fcb(sb, fcb_index), "users");
 	create_dir(sb, index_to_fcb(sb, users_inode), "root");
 	create_dir(sb, index_to_fcb(sb, users_inode), "guest");
