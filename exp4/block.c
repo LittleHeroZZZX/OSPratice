@@ -84,39 +84,52 @@ void merge_block(free_block_list* fbl1, free_block_list* fbl2)
 	list_del(&fbl2->list);
 }
 
+static char* left(char *dest,const char *src ,int n){
+    char *p=dest;
+    char *q=src;
+    int len=strlen(src);
+    if(n>len){
+        n=len;
+    }
+    while(n--) *(p++)=*(q++);
+    *(p++)='\0';
+    return dest;
+}
 void getFullPath(char* DestFullPath, char* filePath)
 {
-	char* currentDir = current_dir_name;
-	char dir[_MAX_DIR];
-	char fname[_MAX_FNAME];
-	char ext[_MAX_EXT];
-	char fullPath[_MAX_PATH] = "\0";
-	//文件路径解析
-	_splitpath(filePath, NULL, dir, fname, ext);
-
-	if (filePath[0] == '/')
-	{
-		strcpy(fullPath, filePath);
-	}
-	else if (!strncmp(filePath, "./", 2))
-	{
-		strcat(fullPath, currentDir);
-		strcat(fullPath, filePath + 2);
-	}
-	else if (!strncmp(filePath, "..", 2))
-	{
-		char temp[_MAX_PATH];
-		strcpy(temp, currentDir);
-		char* ptr = strrchr(temp, '/');
-		strncat(fullPath, currentDir, ptr - temp);
-		strcat(fullPath, filePath + 2);
-	}
-	else
-	{
-		strcat(fullPath, currentDir);
-		strcat(fullPath, filePath);
-	}
-	strcpy(DestFullPath, fullPath);
+   if(filePath[0]=='/'){
+       strcpy(DestFullPath,filePath);
+   } else{
+       char str[_MAX_PATH];
+       strcpy(str,current_dir_name);
+       strcat(str,filePath);
+       char fullPath[_MAX_PATH] ="/";
+       char *token;
+       token = strtok(str,"/");
+       while (token!=NULL){
+           char fname[_MAX_FNAME];
+           strcpy(fname,token);
+           if(!strcmp(fname,"..")){
+               char parentPath[_MAX_PATH];
+               left(parentPath,fullPath,strlen(fullPath)-1);
+               char* ptr = strrchr(fullPath, '/');
+               char* ptr2 = strrchr(parentPath, '/');
+               int offset;
+               if(ptr2==NULL){
+                   offset = (int) (ptr - fullPath);
+                   strcpy(fullPath,fullPath+offset);
+               } else{
+                   left(fullPath,fullPath,strlen(fullPath) - strlen(ptr2));
+               }
+           }else if(!strcmp(fname,".")){
+           } else{
+               strcat(fname,"/");
+               strcat(fullPath,fname);
+           }
+           token = strtok(NULL,"/");
+       }
+       strcpy(DestFullPath,fullPath);
+   }
 }
 
 fcb* findFcb(super_block* sb, char* filePath)
@@ -130,21 +143,17 @@ fcb* findFcb(super_block* sb, char* filePath)
 	if(!strcmp(fullPath,"/")){
         flag=1;
     } else{
-        while (token != NULL)
-        {
-            for (int i = 0; i < ptr->file_count; ++i)
-            {
+        while (token != NULL){
+            for (int i = 0; i < ptr->file_count; ++i){
                 inode* ptrInode = (inode*)do_read(sb, ptr, 0);
                 strcpy(fileName,ptrInode[i].filename);
-                if (!strcmp(ptrInode[i].filename, token))
-                {
+                if (!strcmp(ptrInode[i].filename, token)){
                     ptr = index_to_fcb(sb, ptrInode[i].inode_index);
                     break;
                 }
             }
             char *nextToken = strtok(NULL, "/");
-            if (nextToken == NULL&&!strcmp(fileName, token))
-            {
+            if (nextToken == NULL&&!strcmp(fileName, token)){
                 flag = 1;
             }
             if(nextToken!=NULL){
