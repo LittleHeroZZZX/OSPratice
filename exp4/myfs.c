@@ -178,25 +178,22 @@ void show_dirs(super_block* sb, fcb* fcb, size_t level)
 	free(files_inodes);
 
 }
-void introduce(super_block* sb)
+void show_fs_info(super_block* sb)
 {
 	printf("******************************************\n");
 	printf("******************************************\n");
 	printf("%-20s: %lldMB %lldKB\n",
 		"disk space size",
-		sb->block_count * BLOCK_SIZE / 1024 / 1024 / 1024,
-		sb->block_count * BLOCK_SIZE / 1024 / 1024 % 1024,
+		sb->block_count * BLOCK_SIZE / 1024 / 1024,
 		sb->block_count * BLOCK_SIZE / 1024 % 1024);
 	printf("%-20s: %lldMB %lldKB\n",
 		"free space size",
-		sb->free_block_count * BLOCK_SIZE / 1024 / 1024 / 1024,
 		sb->free_block_count * BLOCK_SIZE / 1024 / 1024 % 1024,
 		sb->free_block_count * BLOCK_SIZE / 1024 % 1024);
 	printf("%-20s: %lldKB\n", "block size", BLOCK_SIZE / 1024);
 	printf("%-20s: %lldMB %lldKB \n",
 		"max file size",
-		MAX_FILE_SIZE / 1024 / 1024 / 1024,
-		MAX_FILE_SIZE / 1024 / 1024 % 1024,
+		MAX_FILE_SIZE / 1024 / 1024,
 		MAX_FILE_SIZE / 1024 % 1024);
 
 	printf("******************************************\n");
@@ -206,7 +203,7 @@ void introduce(super_block* sb)
 
 int main()
 {
-
+    
 	super_block* sb;
 	start_sys("disk", &sb, 1);
 	save("disc.bak", *sb, SIZE);
