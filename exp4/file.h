@@ -33,7 +33,7 @@ void update_fcb(fcb *fcb, unsigned char attribute, size_t length, size_t file_cn
 
 void f_read(super_block *sb, user_open *_user_open, void *buf, size_t size);
 
-void f_write(char *buf, size_t size, user_open *_user_open);
+void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
 
 void *my_cd(super_block *sb, char *filePath);
 

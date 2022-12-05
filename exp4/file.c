@@ -168,6 +168,79 @@ void f_read(super_block *sb, user_open *_user_open, void *buf, size_t size) {
 }
 
 /**
+ * 写入文件
+ * @param sb 超级块
+ * @param _user_open 待写入文件的user_open
+ * @param buf 待写入的文件内容
+ * @param size 写入的长度
+ * @return
+ */
+void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
+{
+	if (!sb | !_user_open || !buf)return;
+	if (_user_open->f_fcb->attribute == DIRECTORY)
+	{
+		printf("File to write is not a file!\n");
+		return;
+	}
+	if (!(_user_open->mode & WRITE))
+	{
+		printf("File to write is not writable!\n");
+		return;
+	}
+
+	fcb* _fcb = _user_open->f_fcb;
+	size_t* old_blocks, * new_blocks;
+	size_t old_block_cnt = (_fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	size_t old_block_frag = _fcb->length % BLOCK_SIZE; //原始文件最后一块的块大小
+	size_t new_block_cnt = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	size_t rest_size = size;
+	size_t size_to_write = 0;
+	int mode = _user_open->mode;
+
+	switch (mode & APPEND)
+	{
+	case 0b100:
+		// append mode
+		_user_open->p_WR = _fcb->length;
+		old_blocks = get_blocks(sb, _fcb);
+		if (!old_block_cnt)
+		{
+			size_to_write = BLOCK_SIZE - old_block_frag;
+			memcpy(index_to_addr(sb, old_blocks[old_block_cnt - 1]) + old_block_frag, buf, size_to_write);
+			rest_size -= size_to_write;
+			_user_open->p_WR += size_to_write;
+		}
+		new_blocks = (size_t*)malloc(sizeof(size_t) * new_block_cnt);
+		for (size_t i = 0; i < old_block_cnt; i++)
+		{
+			new_blocks[i] = allocate_block(sb, 1);
+			size_to_write = rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size;
+			memcpy(index_to_addr(sb, new_blocks[i]), buf + size - rest_size, size_to_write);
+			rest_size -= size_to_write;
+			_user_open->p_WR += size_to_write;
+		}
+		break;
+	case 0b000:
+		// override mode
+		_user_open->p_WR = 0;
+		free_block(sb, _user_open->f_block_start, old_block_cnt);
+		new_blocks = (size_t*)malloc(sizeof(size_t) * (_fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE);
+		for (size_t i = 0; i < new_block_cnt; i++)
+		{
+			new_blocks[i] = allocate_block(sb, 1);
+			size_to_write = rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size;
+			memcpy(index_to_addr(sb, new_blocks[i]), buf + size - rest_size, size_to_write);
+			rest_size -= size_to_write;
+			_user_open->p_WR += size_to_write;
+		}
+		break;
+	}
+	save_blocks(sb, _fcb, new_blocks, new_block_cnt);
+	update_fcb(_fcb, _user_open->f_fcb->attribute, size, _user_open->f_fcb->file_count, 0);
+}
+
+/**
  * 从指定fcb中读取size个字节的数据
  * @param sb 超级块
  * @param fcb 文件控制块

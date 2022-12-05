@@ -71,7 +71,7 @@ typedef struct FCB
 	struct tm last_modify_time;
 	size_t file_count; // 目录下文件数量
 
-	size_t mixed_index_block[INDEX_CNT]; // 混合索引块，前10个直接索引块，1第1个一级索引块，第12个二级索引块
+	size_t mixed_index_block[INDEX_CNT]; // 混合索引块，前10个直接索引块，第11个一级索引块，第12个二级索引块
 	size_t length;
 } fcb;
 
