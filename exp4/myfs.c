@@ -178,25 +178,22 @@ void show_dirs(super_block* sb, fcb* fcb, size_t level)
 	free(files_inodes);
 
 }
-void introduce(super_block* sb)
+void show_fs_info(super_block* sb)
 {
 	printf("******************************************\n");
 	printf("******************************************\n");
 	printf("%-20s: %lldMB %lldKB\n",
 		"disk space size",
-		sb->block_count * BLOCK_SIZE / 1024 / 1024 / 1024,
-		sb->block_count * BLOCK_SIZE / 1024 / 1024 % 1024,
+		sb->block_count * BLOCK_SIZE / 1024 / 1024,
 		sb->block_count * BLOCK_SIZE / 1024 % 1024);
 	printf("%-20s: %lldMB %lldKB\n",
 		"free space size",
-		sb->free_block_count * BLOCK_SIZE / 1024 / 1024 / 1024,
 		sb->free_block_count * BLOCK_SIZE / 1024 / 1024 % 1024,
 		sb->free_block_count * BLOCK_SIZE / 1024 % 1024);
 	printf("%-20s: %lldKB\n", "block size", BLOCK_SIZE / 1024);
 	printf("%-20s: %lldMB %lldKB \n",
 		"max file size",
-		MAX_FILE_SIZE / 1024 / 1024 / 1024,
-		MAX_FILE_SIZE / 1024 / 1024 % 1024,
+		MAX_FILE_SIZE / 1024 / 1024,
 		MAX_FILE_SIZE / 1024 % 1024);
 
 	printf("******************************************\n");
@@ -207,21 +204,35 @@ void introduce(super_block* sb)
 int main()
 {
 
-	super_block* sb;
-	start_sys("disk", &sb, 1);
-	save("disc.bak", *sb, SIZE);
-	create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
-	printf("/(dir)\n");
-	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-	my_cd(sb, "/users/");
-	printf("%s\n", current_dir_name);
-	printf("%s\n", current_dir->filename);
-	my_cd(sb, "./guest");
-	printf("%s\n", current_dir_name);
-	printf("%s\n", current_dir->filename);
-	my_cd(sb, "../groups");
-	printf("%s\n", current_dir_name);
-	printf("%s\n", current_dir->filename);
-	return 0;
+    super_block *sb;
+    start_sys("disk", &sb, 1);
+    show_fs_info(sb);
+    save("disc.bak", *sb, SIZE);
+    create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
+    printf("/(dir)\n");
+    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
+    my_cd(sb, "/users/");
+    printf("%s\n", current_dir_name);
+    printf("%s\n", current_dir->filename);
+    my_cd(sb, "./guest");
+    printf("%s\n", current_dir_name);
+    printf("%s\n", current_dir->filename);
+    my_cd(sb, "../groups");
+    printf("%s\n", current_dir_name);
+    printf("%s\n", current_dir->filename);
+    char *buf = "hello world";
+    show_fs_info(sb);
+    ssize_t text_inode = create_file(sb, current_dir, "test.txt", strlen(buf), buf);
+    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
+    show_fs_info(sb);
+    my_cat(sb, index_to_fcb(sb, text_inode));
+
+    buf = malloc(MAX_FILE_SIZE);
+    memset(buf, 1, MAX_FILE_SIZE);
+    text_inode = create_file(sb, current_dir, "test1.txt", strlen(buf), buf);
+    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
+    show_fs_info(sb);
+    my_cat(sb, index_to_fcb(sb, text_inode));
+    return 0;
 }
 
