@@ -203,27 +203,28 @@ void show_fs_info(super_block* sb)
 
 int main()
 {
-    
+
 	super_block* sb;
 	start_sys("disk", &sb, 1);
 	save("disc.bak", *sb, SIZE);
+    current_dir = index_to_fcb(sb, sb->root_index);
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
 	printf("/(dir)\n");
 	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
 
-    printf("%s\n", current_dir_name);
+    printf("full path:%s\n", current_dir_name);
     my_ls(sb,NULL);
 
-	my_cd(sb, "/users/");
-	printf("%s\n", current_dir_name);
-    my_ls(sb,NULL);
+/*	my_cd(sb, "/users/");
+    printf("full path:%s\n", current_dir_name);
+    my_ls(sb,NULL);*/
 
 	my_cd(sb, "./guest");
-	printf("%s\n", current_dir_name);
+    printf("full path:%s\n", current_dir_name);
     my_ls(sb,NULL);
 
 	my_cd(sb, "../groups");
-	printf("%s\n", current_dir_name);
+    printf("full path:%s\n", current_dir_name);
     my_ls(sb,NULL);
 
 	return 0;

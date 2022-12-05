@@ -125,6 +125,7 @@ fcb* findFcb(super_block* sb, char* filePath)
 	getFullPath(fullPath, filePath);
 	fcb* ptr = index_to_fcb(sb, sb->root_index);
 	int flag = 0;
+    char fileName[_MAX_FNAME];
 	char* token = strtok(fullPath, "/");
 	if(!strcmp(fullPath,"/")){
         flag=1;
@@ -134,16 +135,22 @@ fcb* findFcb(super_block* sb, char* filePath)
             for (int i = 0; i < ptr->file_count; ++i)
             {
                 inode* ptrInode = (inode*)do_read(sb, ptr, 0);
+                strcpy(fileName,ptrInode[i].filename);
                 if (!strcmp(ptrInode[i].filename, token))
                 {
                     ptr = index_to_fcb(sb, ptrInode[i].inode_index);
                     break;
                 }
             }
-            token = strtok(NULL, "/");
-            if (token == NULL)
+            char *nextToken = strtok(NULL, "/");
+            if (nextToken == NULL&&!strcmp(fileName, token))
             {
                 flag = 1;
+            }
+            if(nextToken!=NULL){
+                strcpy(token,nextToken);
+            } else{
+                token=NULL;
             }
         }
     }
