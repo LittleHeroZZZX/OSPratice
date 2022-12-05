@@ -13,13 +13,13 @@ ssize_t create_dir(super_block *sb, fcb *dir, char *filename);
 
 ssize_t do_create_file(super_block *sb, fcb *dir, char *filename, unsigned char attribute, size_t length);
 
-ssize_t apply_inode(super_block* fcb);
+ssize_t apply_inode(super_block *fcb);
 
 user_open *my_open(super_block *sb, char *filePath, int mode);
 
-void * my_ls(super_block *sb,char *filePath);
+void *my_ls(super_block *sb, char *filePath);
 
-void *do_read(super_block *sb,fcb *fcb, size_t size);
+void *do_read(super_block *sb, fcb *fcb, size_t size);
 
 void do_write(super_block *sb, fcb *fcb, void *buff, size_t size);
 
@@ -35,8 +35,8 @@ void f_write(char *buf, size_t size, user_open *_user_open);
 
 void *my_cd(super_block *sb, char *filePath);
 
-fcb* index_to_fcb(super_block *sb, size_t index);
+fcb *index_to_fcb(super_block *sb, size_t index);
 
-void do_cat(super_block *sb, fcb *fcb);
+void my_cat(super_block *sb, fcb *fcb);
 
 

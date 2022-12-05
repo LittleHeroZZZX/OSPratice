@@ -12,7 +12,6 @@
 #include "list.h"
 
 
-
 #define BLOCK_SIZE 1024
 #define SIZE (512*1024*1024)
 #define FILENAME_LEN 255
@@ -48,8 +47,7 @@
 #define APPEND 0b100
 
 
-typedef struct free_block_list
-{
+typedef struct free_block_list {
     struct list_head list;
     // 空闲块数量
     size_t count;
@@ -57,7 +55,7 @@ typedef struct free_block_list
     size_t block_index;
 
 } free_block_list;
-typedef struct FCB{
+typedef struct FCB {
     char filename[256];
     // 0: directory, 1: file
     unsigned char attribute; // 文件属性 宏定义 ORDINARY_FILE 0 DIRECTORY 1
@@ -68,8 +66,8 @@ typedef struct FCB{
 
     size_t mixed_index_block[INDEX_CNT]; // 混合索引块，前10个直接索引块，1第1个一级索引块，第12个二级索引块
     size_t length;
-}fcb;
-typedef struct inode{
+} fcb;
+typedef struct inode {
     char filename[255];
     size_t inode_index;
     // 0: directory, 1: file
@@ -77,8 +75,7 @@ typedef struct inode{
 } inode;
 
 
-typedef struct super_block
-{
+typedef struct super_block {
     size_t block_count;
     size_t free_block_count;
     size_t free_block_list_index;
@@ -91,17 +88,17 @@ typedef struct super_block
     size_t root_index;
 } super_block;
 
-typedef struct user_open{
-    fcb* f_fcb;
+typedef struct user_open {
+    fcb *f_fcb;
     size_t f_block_start;
     char path[256];
     size_t p_WR; // offset of point in read and write
     int mode;
     unsigned char pcb_modified;
     unsigned char is_empty;
-}user_open;
+} user_open;
 
 
-extern fcb* current_dir;
+extern fcb *current_dir;
 extern char current_dir_name[_MAX_PATH];
 #endif //OSPRATICE_TYPES_H
