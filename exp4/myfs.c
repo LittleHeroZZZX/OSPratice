@@ -209,7 +209,6 @@ void show_fs_info(super_block* sb)
 int main()
 {
 
-
 	super_block* sb;
 	start_sys("disk", &sb, 1);
 	save("disc.bak", *sb, SIZE);
@@ -232,6 +231,8 @@ int main()
 	my_cd(sb, "../groups");
     printf("full path:%s\n", current_dir_name);
     my_ls(sb,NULL);
+
+	show_fs_info(sb);
 
 	return 0;
 
