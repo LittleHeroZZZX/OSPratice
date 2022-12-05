@@ -37,6 +37,10 @@ void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
 
 void *my_cd(super_block *sb, char *filePath);
 
+void my_mkdir(super_block *sb,char *dirname);
+
+void my_pwd();
+
 fcb *index_to_fcb(super_block *sb, size_t index);
 
 ssize_t dir_fcb_to_index(super_block *sb, fcb *fcb);

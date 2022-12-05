@@ -119,6 +119,7 @@ void my_format(super_block** p_sb)
 	create_dir(sb, index_to_fcb(sb, users_inode), "guest");
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "groups");
 
+	memcpy(current_dir, index_to_fcb(sb,sb->root_index), sizeof(fcb));
 }
 
 void save(char* bak_file, super_block sb, size_t size)
@@ -217,20 +218,20 @@ int main()
     printf("/(dir)\n");
     show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
 
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
-
-    my_cd(sb, "/users/");
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
-
-    my_cd(sb, "./guest");
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
-
-    my_cd(sb, "../groups");
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
+//    printf("full path:%s\n", current_dir_name);
+//    my_ls(sb,NULL);
+//
+//    my_cd(sb, "/users/");
+//    printf("full path:%s\n", current_dir_name);
+//    my_ls(sb,NULL);
+//
+//    my_cd(sb, "./guest");
+//    printf("full path:%s\n", current_dir_name);
+//    my_ls(sb,NULL);
+//
+//    my_cd(sb, "../groups");
+//    printf("full path:%s\n", current_dir_name);
+//    my_ls(sb,NULL);
 
     return 0;
 

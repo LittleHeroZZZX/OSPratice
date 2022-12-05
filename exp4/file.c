@@ -97,6 +97,7 @@ void* my_ls(super_block* sb, char* filePath)
 			ptr[i].last_modify_time.tm_year + BASE_YEAR, ptr->last_modify_time.tm_mon, ptr->last_modify_time.tm_mday,
 			ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
 	}
+	printf("\n");
 	free(filePath);
 }
 
@@ -112,6 +113,34 @@ void* my_cd(super_block* sb, char* filePath)
 	{
 		printf("There is no such directory!\n");
 	}
+}
+
+void my_mkdir(super_block* sb, char* dirname)
+{
+	if (dirname == NULL)
+	{
+		printf("Dir name is not set.");
+		return;
+	}
+
+	fcb* dirFcb = current_dir;
+	inode* p_inode = (inode*)do_read(sb, dirFcb, 0);
+	for (int i = 0; i < dirFcb->file_count; ++i)
+	{
+		fcb* _fcb = index_to_fcb(sb, p_inode[i].inode_index);
+		if (!strcmp(_fcb->filename, dirname))
+		{
+			printf("There is duplicate name file in current dir.");
+			return;
+		}
+	}
+	create_dir(sb, current_dir, dirname);
+	return;
+}
+
+void my_pwd()
+{
+	printf("%s\n",current_dir_name);
 }
 
 /**
@@ -180,12 +209,12 @@ void f_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
 	size_t* blocks = get_blocks(sb, fcb);
 	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-	_user_open->p_WR=blocks[0];
+	_user_open->p_WR = blocks[0];
 	for (size_t i = 0; i < block_cnt; i++)
 	{
 		memcpy(buf + i * BLOCK_SIZE, index_to_addr(sb, blocks[i]), rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size);
 		rest_size -= BLOCK_SIZE;
-		_user_open->p_WR+=BLOCK_SIZE;
+		_user_open->p_WR += BLOCK_SIZE;
 	}
 	free(blocks);
 	_user_open->p_WR = offset;
@@ -218,7 +247,7 @@ void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 	size_t* old_blocks, * new_blocks;
 	size_t old_block_cnt = (_fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
 	size_t old_block_frag = _fcb->length % BLOCK_SIZE; //原始文件最后一块的块大小
-	size_t new_block_size =0;
+	size_t new_block_size = 0;
 	size_t new_block_cnt = 0;
 	size_t rest_size = size;
 	size_t size_to_write = 0;
@@ -230,8 +259,8 @@ void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		// append mode
 		_user_open->p_WR = _fcb->length;
 		old_blocks = get_blocks(sb, _fcb);
-		new_block_size= _fcb->length + size;
-		new_block_cnt= (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		new_block_size = _fcb->length + size;
+		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		if (old_block_cnt)
 		{
 			size_to_write = BLOCK_SIZE - old_block_frag;
@@ -245,7 +274,7 @@ void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 			new_blocks[i] = allocate_block(sb, 1);
 			size_to_write = rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size;
 			memcpy(index_to_addr(sb, new_blocks[i]), buf + size - rest_size, size_to_write);
-			rest_size -= size_to_write;	// do_write中减去了BLOCK_SIZE
+			rest_size -= size_to_write;    // do_write中减去了BLOCK_SIZE
 			_user_open->p_WR += size_to_write;
 		}
 		break;
@@ -254,7 +283,7 @@ void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		_user_open->p_WR = 0;
 		free_block(sb, _user_open->f_block_start, old_block_cnt);
 		new_block_size = size;
-		new_block_cnt= (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		new_blocks = (size_t*)malloc(sizeof(size_t) * new_block_cnt);
 		for (size_t i = 0; i < new_block_cnt; i++)
 		{
@@ -487,29 +516,32 @@ ssize_t create_file(super_block* sb, fcb* dir, char* filename, size_t size, void
 	return index;
 }
 
-ssize_t delete_file(super_block *sb, fcb *fcb, struct FCB* dir) {
+ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
+{
 //    todo
-    if (fcb->attribute == DIRECTORY) {
-        if (fcb->file_count > 2) {
-            printf("directory is not empty\n");
-            return ERR_PARAM_INVALID;
-        } else {
-            fcb->file_count = 0;
-            fcb->length = 0;
-            fcb->attribute = 0;
-            dir->file_count--;
-            return 0;
-        }
-    }
+	if (fcb->attribute == DIRECTORY)
+	{
+		if (fcb->file_count > 2)
+		{
+			printf("directory is not empty\n");
+			return ERR_PARAM_INVALID;
+		}
+		else
+		{
+			fcb->file_count = 0;
+			fcb->length = 0;
+			fcb->attribute = 0;
+			dir->file_count--;
+			return 0;
+		}
+	}
 }
 
-void clear_file(super_block *sb, fcb *fcb)
+void clear_file(super_block* sb, fcb* fcb)
 {
 //    todo
 
 }
-
-
 
 /**
  * 根据目录文件的fcb获取目录文件的索引节点号
@@ -517,13 +549,13 @@ void clear_file(super_block *sb, fcb *fcb)
  * @param fcb 文件控制块
  * @return 目录文件的索引节点号
  */
-ssize_t dir_fcb_to_index(super_block *sb, fcb *fcb)
+ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb)
 {
 //    todo
-    if (fcb->attribute != DIRECTORY)
-        return ERR_PARAM_INVALID;
-    inode *inodes = (inode *) do_read(sb, fcb, sizeof (inode));
-    ssize_t index = inodes[0].inode_index;
-    free(inodes);
-    return index;
+	if (fcb->attribute != DIRECTORY)
+		return ERR_PARAM_INVALID;
+	inode* inodes = (inode*)do_read(sb, fcb, sizeof(inode));
+	ssize_t index = inodes[0].inode_index;
+	free(inodes);
+	return index;
 }

@@ -19,6 +19,4 @@ void recover(super_block** sb, char* bak_file);
 void save(char* bak_file, super_block sb, size_t size);
 void show_fs_info(super_block* sb);
 
-void test_for_sk();
-
 #endif //MYFS_H
