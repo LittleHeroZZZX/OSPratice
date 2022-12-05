@@ -84,9 +84,9 @@ void* my_ls(super_block* sb, char* filePath)
 	fcb* dirFcb = findFcb(sb, filePath);
 	if (dirFcb == NULL || dirFcb->attribute == ORDINARY_FILE)
 	{
-		printf("There is no such file!");
+		printf("There is no such file!\n");
 	}
-	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n\n");
+	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
 	inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 	for (int i = 0; i < dirFcb->file_count; ++i)
 	{

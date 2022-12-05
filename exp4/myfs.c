@@ -216,32 +216,6 @@ int main()
     create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
     printf("/(dir)\n");
     show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
-
-    my_cd(sb, "/users/");
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
-
-    my_cd(sb, "./guest");
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
-
-    my_cd(sb, "../groups");
-    printf("full path:%s\n", current_dir_name);
-    my_ls(sb,NULL);
-
     return 0;
-
-	show_fs_info(sb);
-
-    char *buf = malloc(MAX_FILE_SIZE);
-    memset(buf, (int)'a', MAX_FILE_SIZE);
-    size_t index= create_file(sb, index_to_fcb(sb, sb->root_index), "test.txt", MAX_FILE_SIZE, buf);
-    my_cat(sb, index_to_fcb(sb, index));
-
-	return 0;
-
 }
 
