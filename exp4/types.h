@@ -41,64 +41,75 @@
 #define ERR_NOT_ENOUGH_INODE (-3)
 
 
-// 文件权限
+/**
+ * 文件读写权限与模式
+ * 由低位到高位分别为：读、写、写模式
+ * 写模式：0表示覆盖写，1表示追加写
+ */
 #define READ 0b001
 #define WRITE 0b010
 #define APPEND 0b100
 
 
-typedef struct free_block_list {
-    struct list_head list;
-    // 空闲块数量
-    size_t count;
-    // 空闲块起始盘块
-    size_t block_index;
+typedef struct free_block_list
+{
+	struct list_head list;
+	// 空闲块数量
+	size_t count;
+	// 空闲块起始盘块
+	size_t block_index;
 
 } free_block_list;
-typedef struct FCB {
-    char filename[256];
-    // 0: directory, 1: file
-    unsigned char attribute; // 文件属性 宏定义 ORDINARY_FILE 0 DIRECTORY 1
-    unsigned char is_used; // 在超级块的索引节点表中是否被使用
-    struct tm create_time;
-    struct tm last_modify_time;
-    size_t file_count; // 目录下文件数量
 
-    size_t mixed_index_block[INDEX_CNT]; // 混合索引块，前10个直接索引块，1第1个一级索引块，第12个二级索引块
-    size_t length;
+typedef struct FCB
+{
+	char filename[256];
+	// 0: directory, 1: file
+	unsigned char attribute; // 文件属性 宏定义 ORDINARY_FILE 0 DIRECTORY 1
+	unsigned char is_used; // 在超级块的索引节点表中是否被使用
+	struct tm create_time;
+	struct tm last_modify_time;
+	size_t file_count; // 目录下文件数量
+
+	size_t mixed_index_block[INDEX_CNT]; // 混合索引块，前10个直接索引块，1第1个一级索引块，第12个二级索引块
+	size_t length;
 } fcb;
-typedef struct inode {
-    char filename[255];
-    size_t inode_index;
-    // 0: directory, 1: file
-    unsigned char attribute;
+
+typedef struct inode
+{
+	char filename[255];
+	size_t inode_index;
+	// 0: directory, 1: file
+	unsigned char attribute;
 } inode;
 
+typedef struct super_block
+{
+	size_t block_count;
+	size_t free_block_count;
+	size_t free_block_list_index;
+	// 索引节点数组
+	fcb* fcb_array;
 
-typedef struct super_block {
-    size_t block_count;
-    size_t free_block_count;
-    size_t free_block_list_index;
-    // 索引节点数组
-    fcb *fcb_array;
-
-    // 文件系统在内存中的起始地址
-    void *start_pos;
-    free_block_list free_block_list;
-    size_t root_index;
+	// 文件系统在内存中的起始地址
+	void* start_pos;
+	free_block_list free_block_list;
+	size_t root_index;
 } super_block;
 
-typedef struct user_open {
-    fcb *f_fcb;
-    size_t f_block_start;
-    char path[256];
-    size_t p_WR; // offset of point in read and write
-    int mode;
-    unsigned char pcb_modified;
-    unsigned char is_empty;
+typedef struct user_open
+{
+	fcb* f_fcb;
+	size_t f_block_start;
+	char path[256];
+	size_t p_WR; // offset of point in read and write
+	int mode;
+	unsigned char pcb_modified;
+	unsigned char is_empty;
 } user_open;
 
+extern fcb* current_dir;
 
-extern fcb *current_dir;
 extern char current_dir_name[_MAX_PATH];
+
 #endif //OSPRATICE_TYPES_H
