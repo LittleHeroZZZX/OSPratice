@@ -13,8 +13,7 @@
 })
 
 
-struct list_head
-{
+struct list_head {
     struct list_head *next, *prev;
 };
 
@@ -23,33 +22,28 @@ struct list_head
 #define LIST_HEAD(name) \
     struct list_head name = LIST_HEAD_INIT(name)
 
-static inline void INIT_LIST_HEAD(struct list_head *list)
-{
+static inline void INIT_LIST_HEAD(struct list_head *list) {
     list->next = list;
     list->prev = list;
 }
 
 static inline void __list_add(struct list_head *new_node,
-                  struct list_head *prev,
-                  struct list_head *next)
-{
+                              struct list_head *prev,
+                              struct list_head *next) {
     next->prev = new_node;
     new_node->next = next;
     new_node->prev = prev;
     prev->next = new_node;
 }
 
-static inline void list_add(struct list_head *new_node, struct list_head *head)
-{
+static inline void list_add(struct list_head *new_node, struct list_head *head) {
     __list_add(new_node, head, head->next);
 }
 
-static inline void list_del(struct list_head *entry)
-{
+static inline void list_del(struct list_head *entry) {
     entry->prev->next = entry->next;
     entry->next->prev = entry->prev;
 }
-
 
 
 #define list_for_each(pos, head)\
