@@ -73,13 +73,13 @@ void* my_ls(super_block* sb, char* filePath) {
         filePath = (char *) malloc(sizeof(char) * _MAX_PATH);
         strcpy(filePath, current_dir_name);
     }
-    fcb *DestFcb = findFcb(sb, filePath);
-    if (DestFcb == NULL || DestFcb->attribute == ORDINARY_FILE) {
+    fcb *dirFcb = findFcb(sb, filePath);
+    if (dirFcb == NULL || dirFcb->attribute == ORDINARY_FILE) {
         printf("There is no such file!");
     }
     printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
-    inode *ptrInode = (inode *) do_read(sb, DestFcb, 0);
-    for (int i = 0; i < DestFcb->file_count; ++i) {
+    inode *ptrInode = (inode *) do_read(sb, dirFcb, 0);
+    for (int i = 0; i < dirFcb->file_count; ++i) {
         fcb *ptr = index_to_fcb(sb, ptrInode[i].inode_index);
         printf("%s\t\t%d\t%s\t%d.%d.%d %d:%d\t%d.%d.%d %d:%d\t\n", ptr->filename, ptr->length,
                ptr->attribute == 1 ? "directory" : "file", ptr[i].create_time.tm_year + BASE_YEAR,
@@ -93,10 +93,10 @@ void* my_ls(super_block* sb, char* filePath) {
 void *my_cd(super_block *sb, char *filePath) {
     fcb *fcb = findFcb(sb, filePath);
     if (fcb != NULL) {
-        current_dir = fcb;
+        memcpy(current_dir, fcb, sizeof (fcb));
         getFullPath(current_dir_name, filePath);
     } else {
-        printf("There is no such directory!");
+        printf("There is no such directory!\n");
     }
 }
 
@@ -408,7 +408,7 @@ ssize_t create_dir(super_block *sb, fcb *dir, char *filename) {
     size_t dir_index[2];
     inode dir_inode[2];
     dir_index[0] = index;
-    dir_index[1] = *(size_t *) do_read(sb, dir, sizeof(size_t));
+    dir_index[1] = (*(inode *) do_read(sb, dir, sizeof(inode))).inode_index;
     strcpy(dir_inode[0].filename, ".");
     strcpy(dir_inode[1].filename, "..");
     dir_inode[0].attribute = DIRECTORY;

@@ -108,6 +108,11 @@ void my_format(super_block** p_sb)
 		exit(1);
 	}
 	sb->root_index = fcb_index;
+    inode root_dot;
+    root_dot.inode_index = fcb_index;
+    root_dot.attribute = DIRECTORY;
+    strcpy(root_dot.filename, ".");
+    do_write(sb, index_to_fcb(sb, fcb_index), &root_dot, sizeof(inode));
 	size_t users_inode = create_dir(sb, index_to_fcb(sb, fcb_index), "users");
 	create_dir(sb, index_to_fcb(sb, users_inode), "root");
 	create_dir(sb, index_to_fcb(sb, users_inode), "guest");
@@ -204,35 +209,31 @@ void show_fs_info(super_block* sb)
 int main()
 {
 
-    super_block *sb;
-    start_sys("disk", &sb, 1);
-    show_fs_info(sb);
-    save("disc.bak", *sb, SIZE);
-    create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
-    printf("/(dir)\n");
-    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-    my_cd(sb, "/users/");
-    printf("%s\n", current_dir_name);
-    printf("%s\n", current_dir->filename);
-    my_cd(sb, "./guest");
-    printf("%s\n", current_dir_name);
-    printf("%s\n", current_dir->filename);
-    my_cd(sb, "../groups");
-    printf("%s\n", current_dir_name);
-    printf("%s\n", current_dir->filename);
-    char *buf = "hello world";
-    show_fs_info(sb);
-    ssize_t text_inode = create_file(sb, current_dir, "test.txt", strlen(buf), buf);
-    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-    show_fs_info(sb);
-    my_cat(sb, index_to_fcb(sb, text_inode));
 
-    buf = malloc(MAX_FILE_SIZE);
-    memset(buf, (int)'a', MAX_FILE_SIZE);
-    text_inode = create_file(sb, current_dir, "test1.txt", strlen(buf), buf);
-    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-    show_fs_info(sb);
-    my_cat(sb, index_to_fcb(sb, text_inode));
-    return 0;
+	super_block* sb;
+	start_sys("disk", &sb, 1);
+	save("disc.bak", *sb, SIZE);
+    current_dir = index_to_fcb(sb, sb->root_index);
+	create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
+	printf("/(dir)\n");
+	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
+
+    printf("full path:%s\n", current_dir_name);
+    my_ls(sb,NULL);
+
+/*	my_cd(sb, "/users/");
+    printf("full path:%s\n", current_dir_name);
+    my_ls(sb,NULL);*/
+
+	my_cd(sb, "./guest");
+    printf("full path:%s\n", current_dir_name);
+    my_ls(sb,NULL);
+
+	my_cd(sb, "../groups");
+    printf("full path:%s\n", current_dir_name);
+    my_ls(sb,NULL);
+
+	return 0;
+
 }
 
