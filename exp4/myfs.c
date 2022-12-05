@@ -228,7 +228,7 @@ int main()
     my_cat(sb, index_to_fcb(sb, text_inode));
 
     buf = malloc(MAX_FILE_SIZE);
-    memset(buf, 1, MAX_FILE_SIZE);
+    memset(buf, (int)'a', MAX_FILE_SIZE);
     text_inode = create_file(sb, current_dir, "test1.txt", strlen(buf), buf);
     show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
     show_fs_info(sb);
