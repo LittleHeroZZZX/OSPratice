@@ -359,3 +359,21 @@ ssize_t create_dir(super_block *sb, fcb *dir, char *filename) {
     do_write(sb, fcb, (char *) dir_inode, 2 * sizeof(inode));
     return index;
 }
+/**
+ * 创建文件并写入指定内容
+ * @param sb 超级块
+ * @param dir 上级目录
+ * @param filename 文件名
+ * @param size 文件大小
+ * @param content 文件内容
+ * @return 创建的inode
+ */
+ssize_t create_file(super_block *sb, fcb *dir, char *filename, size_t size, void *content)
+{
+    ssize_t index = do_create_file(sb, dir, filename, ORDINARY_FILE, 0);
+    if (index < 0) return index;
+    fcb *fcb = index_to_fcb(sb, index);
+    if (size > 0)
+        do_write(sb, fcb, content, size);
+    return index;
+}

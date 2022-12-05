@@ -11,6 +11,8 @@
 
 ssize_t create_dir(super_block *sb, fcb *dir, char *filename);
 
+ssize_t create_file(super_block *sb, fcb *dir, char *filename, size_t size, void *content);
+
 ssize_t do_create_file(super_block *sb, fcb *dir, char *filename, unsigned char attribute, size_t length);
 
 ssize_t apply_inode(super_block *fcb);

@@ -190,6 +190,7 @@ int main() {
     my_cd(sb, "../groups");
     printf("%s\n", current_dir_name);
     printf("%s\n", current_dir->filename);
+    show_fs_info(sb);
     return 0;
 }
 
