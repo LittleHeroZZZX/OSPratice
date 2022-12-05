@@ -335,7 +335,7 @@ ssize_t create_dir(super_block *sb, fcb *dir, char *filename) {
     size_t dir_index[2];
     inode dir_inode[2];
     dir_index[0] = index;
-    dir_index[1] = *(size_t *) do_read(sb, dir, sizeof(size_t));
+    dir_index[1] = (*(inode *) do_read(sb, dir, sizeof(inode))).inode_index;
     strcpy(dir_inode[0].filename, ".");
     strcpy(dir_inode[1].filename, "..");
     dir_inode[0].attribute = DIRECTORY;
