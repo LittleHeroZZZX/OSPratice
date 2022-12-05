@@ -3,4 +3,4 @@
 
 fcb* current_dir;
 
-char current_dir_name[_MAX_PATH];
+char current_dir_name[_MAX_PATH] = "/";

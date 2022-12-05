@@ -34,7 +34,7 @@
 
 #define MAX_FILE_SIZE ((LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT+LEVEL2_BLOCK_CNT)*BLOCK_SIZE)
 
-#define pwd current_dir;
+#define BASE_YEAR 1900
 
 #define ERR_NOT_ENOUGH_SPACE (-1)
 #define ERR_PARAM_INVALID (-2)

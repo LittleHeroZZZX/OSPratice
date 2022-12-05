@@ -123,27 +123,30 @@ fcb* findFcb(super_block* sb, char* filePath)
 {
 	char fullPath[_MAX_PATH];
 	getFullPath(fullPath, filePath);
-	printf("%s\n", fullPath);
 	fcb* ptr = index_to_fcb(sb, sb->root_index);
 	int flag = 0;
 	char* token = strtok(fullPath, "/");
-	while (token != NULL)
-	{
-		for (int i = 0; i < ptr->file_count; ++i)
-		{
-			inode* ptrInode = (inode*)do_read(sb, ptr, 0);
-			if (!strcmp(ptrInode[i].filename, token))
-			{
-				ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-				break;
-			}
-		}
-		token = strtok(NULL, "/");
-		if (token == NULL)
-		{
-			flag = 1;
-		}
-	}
+	if(!strcmp(fullPath,"/")){
+        flag=1;
+    } else{
+        while (token != NULL)
+        {
+            for (int i = 0; i < ptr->file_count; ++i)
+            {
+                inode* ptrInode = (inode*)do_read(sb, ptr, 0);
+                if (!strcmp(ptrInode[i].filename, token))
+                {
+                    ptr = index_to_fcb(sb, ptrInode[i].inode_index);
+                    break;
+                }
+            }
+            token = strtok(NULL, "/");
+            if (token == NULL)
+            {
+                flag = 1;
+            }
+        }
+    }
 	if (flag == 0)
 	{
 		return NULL;
