@@ -42,6 +42,12 @@
 #define ERR_NOT_ENOUGH_INODE (-3)
 
 
+// 文件权限
+#define READ 0b001
+#define WRITE 0b010
+#define APPEND 0b100
+
+
 typedef struct free_block_list
 {
     struct list_head list;
@@ -89,8 +95,8 @@ typedef struct user_open{
     fcb* f_fcb;
     size_t f_block_start;
     char path[256];
-    size_t p_WR;
-    char mode[8];
+    size_t p_WR; // offset of point in read and write
+    int mode;
     unsigned char pcb_modified;
     unsigned char is_empty;
 }user_open;

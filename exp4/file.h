@@ -15,7 +15,7 @@ ssize_t do_create_file(super_block *sb, fcb *dir, char *filename, unsigned char 
 
 ssize_t apply_inode(super_block* fcb);
 
-user_open *my_open(super_block *sb, char *filePath, char* mode);
+user_open *my_open(super_block *sb, char *filePath, int mode);
 
 void * my_ls(super_block *sb,char *filePath);
 
@@ -29,9 +29,9 @@ void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt);
 
 void update_fcb(fcb *fcb, unsigned char attribute, size_t length, size_t file_cnt, unsigned char create);
 
-void my_fread(user_open *_user_open, char *buf,size_t size);
+void f_read(super_block *sb, user_open *_user_open, void *buf, size_t size);
 
-void my_fwrite(char *buf, size_t size, user_open *_user_open);
+void f_write(char *buf, size_t size, user_open *_user_open);
 
 void *my_cd(super_block *sb, char *filePath);
 
