@@ -209,7 +209,7 @@ void* do_read(super_block* sb, fcb* fcb, size_t size)
 	setbuf(stdout, NULL);
 	buff = malloc(rest_size);
 	blocks = get_blocks(sb, fcb);
-	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	size_t block_cnt = (rest_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 	for (size_t i = 0; i < block_cnt; i++)
 	{
 		memcpy(buff + i * BLOCK_SIZE, index_to_addr(sb, blocks[i]), rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size);
