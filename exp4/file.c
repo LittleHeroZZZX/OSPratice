@@ -245,7 +245,7 @@ ssize_t apply_inode(super_block *fcb) {
  * @param block_cnt 磁盘块数量
  */
 void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt) {
-    size_t old_block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    ssize_t old_block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
     size_t *old_blocks = get_blocks(sb, fcb);
     if (block_cnt <= old_block_cnt) {
         // 先释放多余磁盘块
@@ -267,10 +267,10 @@ void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt) {
         if (old_block_cnt <= LEVEL0_BLOCK_CNT + LEVEL1_BLOCK_CNT) {
             fcb->mixed_index_block[LEVEL0_BLOCK_CNT + 1] = allocate_block(sb, 1);
         }
-        size_t *level1_blocks = index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT + LEVEL1_INDEX_CNT-1]);
+        size_t *level1_blocks = index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT + LEVEL1_INDEX_CNT]);
         size_t level1_block_cnt =
                 (block_cnt - LEVEL0_BLOCK_CNT - LEVEL1_BLOCK_CNT + LEVEL1_BLOCK_CNT - 1) / LEVEL1_BLOCK_CNT;
-        size_t old_level1_block_cnt =
+        ssize_t old_level1_block_cnt = old_block_cnt <= LEVEL0_BLOCK_CNT + LEVEL1_BLOCK_CNT ? 0 :
                 (old_block_cnt - LEVEL0_BLOCK_CNT - LEVEL1_BLOCK_CNT + LEVEL1_BLOCK_CNT - 1) / LEVEL1_BLOCK_CNT;
         if (level1_block_cnt > old_level1_block_cnt)
             for (size_t i = old_level1_block_cnt; i < level1_block_cnt; i++)
@@ -280,6 +280,8 @@ void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt) {
                    blocks + LEVEL0_BLOCK_CNT + LEVEL1_BLOCK_CNT + i * LEVEL1_BLOCK_CNT,
                    sizeof(size_t) * (block_cnt <LEVEL0_BLOCK_CNT +LEVEL1_BLOCK_CNT +(i + 1) *LEVEL1_BLOCK_CNT?
                    block_cnt -LEVEL0_BLOCK_CNT-LEVEL1_BLOCK_CNT- i*LEVEL1_BLOCK_CNT: LEVEL1_BLOCK_CNT));
+        memcpy(index_to_addr(sb, fcb->mixed_index_block[LEVEL0_BLOCK_CNT + 1]),
+               level1_blocks, sizeof(size_t) * level1_block_cnt);
     }
 
 }
