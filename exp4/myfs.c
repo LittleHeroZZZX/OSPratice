@@ -256,8 +256,7 @@ int execute(super_block* sb,char **args){
         return 1;
     for (int i = 0; i < sizeof(cmd) / sizeof(*cmd); ++i) {
         if (!strcmp(args[0],cmd[i])){
-            (*cmd_func[i])(sb,args);
-            return 1;
+            return (*cmd_func[i])(sb,args);
         }
     }
 }
@@ -272,7 +271,16 @@ void show_csh(super_block* sb){
         args = getArgs(cmd);
 /*        for (char **ptr =args; *ptr!=NULL; ptr++)  //遍历参数
             printf("arg :%s\n",*ptr);*/
-        status = execute(sb,args);
+        if(open_file_list[current_dir_fd].f_fcb->attribute == ORDINARY_FILE){
+            // 如果当前在文件中，read,write除外的其他命令不能使用。
+            if(!strcmp(args[1],"write")||!strcmp(args[1],"read")){
+                status = execute(sb,args);
+            } else{
+                fprintf(stderr, "\"%s error\": Now in the file, the command cannot be used!\n",args[1]);
+            }
+        }else{
+            status = execute(sb,args);
+        }
     }while (status);
 }
 

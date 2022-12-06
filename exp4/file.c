@@ -46,7 +46,10 @@ ssize_t do_create_file(super_block* sb, fcb* dir, char* filename, unsigned char 
 		return block_index;
 	}
 }
-
+/**
+ * 从open_file_list获取一个未被使用的user_open
+ * @return 找到返回对应的下标，满了返回-1
+ */
 int get_user_open() {
     int i;
     for (i = 0; i < MAX_OPEN_FILE; i++) {
@@ -56,7 +59,13 @@ int get_user_open() {
     }
     return -1;
 }
-
+/**
+ * 根据文件路径和打开模式打开文件，加入open_file_list中
+ * @param sb
+ * @param filePath
+ * @param mode 文件打开模式，传入NULL默认为“r”
+ * @return open_file_list 的下标
+ */
 int do_open(super_block* sb, char* filePath,char *mode){
     int fd = get_user_open();
     if (fd==-1){
@@ -78,16 +87,15 @@ int do_open(super_block* sb, char* filePath,char *mode){
     return fd;
 }
 
-
 /**
- *
- * @param sb 打开单个文件 ，-l查看所有打开的文件
- * @param filePath 文件路径
- * @param args 参数
+ * 打开单个文件 ，-l查看所有打开的文件
+ * @param sb
+ * @param args
  * @return
  */
 int my_open(super_block* sb, char **args)
 {
+    int fd;
     //参数为空
     if (args[1] == NULL) {
         fprintf(stderr, "open: missing argument!\n");
@@ -112,18 +120,17 @@ int my_open(super_block* sb, char **args)
             return 1;
         }
     }
+
     char *filePath =NULL;
     char *mode = NULL;
     if(args[1]!=NULL){
         filePath = args[1];
     }else{
-        fprintf(stderr, "\"open error\": cannot open %s: No such file or folder\n", args[1]);
+        fprintf(stderr, "\"open error\": missing argument\n", args[1]);
         return 1;
     }
-    if(args[2]==NULL){
-        mode = "r";
-    }
-    do_open(sb,filePath,mode);
+    fd = do_open(sb,filePath,NULL);
+    getFullPath(current_dir_name, filePath);
 	return 1;
 }
 
@@ -133,7 +140,6 @@ int my_open(super_block* sb, char **args)
  * @param filePath
  * @return
  */
-
 int my_ls(super_block* sb, char** args)
 {
     char * filePath =NULL;
@@ -165,7 +171,12 @@ int my_ls(super_block* sb, char** args)
 	printf("\n");
     return 1;
 }
-
+/**
+ * cd 到一个文件夹或者文件。
+ * @param sb
+ * @param args
+ * @return
+ */
 int my_cd(super_block* sb, char** args)
 {
     int fd;
