@@ -235,9 +235,10 @@ void my_mkdir(super_block* sb, char* dirname)
 	return;
 }
 
-void my_pwd()
+int my_pwd()
 {
 	printf("%s\n",current_dir_name);
+    return 1;
 }
 
 /**
@@ -657,18 +658,22 @@ ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb)
 	return index;
 }
 
-void my_rmdir(char **args){
-
+int my_rmdir(super_block* sb,char **args){
+    return 1;
 }
-void my_create(char **args){
 
+int my_create(super_block* sb,char **args){
+    return 1;
 }
-void my_rm(char **args){
 
+int my_rm(super_block* sb,char **args){
+    return 1;
 }
-void my_exit_sys(char **args){
 
+int my_exit_sys(super_block* sb,char **args){
+    return 1;
 }
-void my_close(char **args){
 
+int my_close(super_block* sb,char **args){
+    return 1;
 }

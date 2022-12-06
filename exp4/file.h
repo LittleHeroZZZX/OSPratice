@@ -41,7 +41,7 @@ int my_cd(super_block* sb, char** args);
 
 void my_mkdir(super_block *sb,char *dirname);
 
-void my_pwd();
+int my_pwd();
 
 fcb *index_to_fcb(super_block *sb, size_t index);
 
@@ -53,11 +53,11 @@ ssize_t delete_file(super_block *sb, fcb *fcb, struct FCB* dir);
 
 void clear_file(super_block *sb, fcb *fcb);
 
-void my_rmdir(char **args);
-void my_create(char **args);
-void my_rm(char **args);
-void my_exit_sys(char **args);
-void my_close(char **args);
+int my_rmdir(super_block* sb,char **args);
+int my_create(super_block* sb,char **args);
+int my_rm(super_block* sb,char **args);
+int my_exit_sys(super_block* sb,char **args);
+int my_close(super_block* sb,char **args);
 
 
 
