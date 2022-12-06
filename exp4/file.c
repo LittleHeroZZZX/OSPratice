@@ -97,6 +97,16 @@ int my_open(super_block* sb, char** args)
 		printf("open: missing argument!\n");
 		return 1;
 	}
+	
+	//查看帮助文档
+	if(!strcmp(args[1],"--help")){
+		printf("Usage1: open [OPTION]...\n");
+		printf("Usage2: open [FILE]...\n");
+		printf("Open the files or list all the information of openfile \n");
+		printf("OPTION:\n");
+		printf("    -l: List all the information of openfile\n");
+		return 1;
+	}
 
 	// -l查看所有已经打开的文件
 	if (args[1][0] == '-')
@@ -126,38 +136,45 @@ int my_open(super_block* sb, char** args)
 			}
 			return 1;
 		}
-		else
+		else if(strcmp(args[1],"--help"))
 		{
 			printf("\"open error\": wrong argument\n");
 			return 1;
 		}
 	}
-
-	char* filePath = NULL;
-	if (args[1] != NULL)
+	
+	int cnt=1;
+	char** p = args;
+	for (p++; *p != NULL; p++)
 	{
-		filePath = args[1];
-	}
-	else
-	{
-		printf( "\"open error\": missing path argument\n", args[1]);
-		return 1;
+		char* filePath = NULL;
+		if (*p != NULL)
+		{
+			filePath = *p;
+		}
+		else
+		{
+			printf( "\"open error in argument%d\": missing path argument\n", cnt);
+			return 1;
+		}
+		
+		if(findFcb(sb,filePath)==NULL){
+			printf( "\"open error in argument%d\": cannot open %s: There is no such file or folder\n",cnt,*p);
+			return 1;
+		}
+		
+		//如果当前文件已经被打开
+		if (is_file_open(filePath) != -1)
+		{
+			printf( "\"open error in argument%d\": cannot open %s: File or folder is open\n",cnt, filePath, *p);
+			return 1;
+		}
+		
+		//可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
+		do_open(sb, filePath);
+		cnt++;
 	}
 	
-	if(findFcb(sb,filePath)==NULL){
-		printf( "\"open error\": cannot open %s: There is no such file or folder\n", args[1]);
-		return 1;
-	}
-
-	//如果当前文件已经被打开
-	if (is_file_open(filePath) != -1)
-	{
-		printf( "\"open error\": cannot open %s: File or folder is open\n", filePath);
-		return 1;
-	}
-
-	//可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
-	do_open(sb, filePath);
 
 	return 1;
 }

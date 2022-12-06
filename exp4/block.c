@@ -114,6 +114,9 @@ void getFullPath(char* DestFullPath, char* filePath)
 	   //遇到连续多个"///////"，忽略
 	   for (i = 0; filePath[i]=='/'; ++i);
        strcpy(DestFullPath,filePath+i-1);
+	   if (strcmp(DestFullPath,"/")&&DestFullPath[strlen(DestFullPath)-1]!='/'){
+		   strcat(DestFullPath,"/");
+	   }
    } else{
        char str[_MAX_PATH];
        strcpy(str,current_dir_name);

@@ -126,7 +126,7 @@ void my_format(super_block** p_sb)
 	memcpy(current_dir, index_to_fcb(sb, sb->root_index), sizeof(fcb));
 
 	// 初始化文件打开表
-	do_open(sb,"/");
+	do_open(sb,current_dir_name);
 }
 
 void save(char* bak_file, super_block sb, size_t size)
