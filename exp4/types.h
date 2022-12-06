@@ -107,6 +107,7 @@ typedef struct user_open
 	size_t f_block_start;
 	char path[256];
 	size_t p_WR; // offset of point in read and write
+
 	int mode;
 	unsigned char pcb_modified;
 	unsigned char is_empty;

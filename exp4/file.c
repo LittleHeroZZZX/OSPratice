@@ -47,24 +47,84 @@ ssize_t do_create_file(super_block* sb, fcb* dir, char* filename, unsigned char 
 	}
 }
 
+int get_user_open() {
+    int i;
+    for (i = 0; i < MAX_OPEN_FILE; i++) {
+        if (open_file_list[i].is_empty) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int do_open(super_block* sb, char* filePath,char *mode){
+    int fd = get_user_open();
+    if (fd==-1){
+        fprintf(stderr, "\"open error\": The number of file openings is maximum\n");
+        return -1;
+    }
+    open_file_list[fd].f_fcb = findFcb(sb,filePath);
+    open_file_list[fd].is_empty = 0;
+    if (strcmp(mode,"r")){
+        open_file_list[fd].mode = READ;
+    } else if(!strcmp(mode,"w")){
+        open_file_list[fd].mode = WRITE;
+    } else if(strcmp(mode,"a")){
+        open_file_list[fd].mode = WRITE;
+    } else{
+        fprintf(stderr, "\"open error\": The %s mode could not be found\n", mode);
+        return -1;
+    }
+    return fd;
+}
+
+
 /**
  *
- * @param sb
+ * @param sb 打开单个文件 ，-l查看所有打开的文件
  * @param filePath 文件路径
- * @param mode 打开模式（r/w/rw/a/o)
+ * @param args 参数
  * @return
  */
-user_open* my_open(super_block* sb, char* filePath, int mode)
+int my_open(super_block* sb, char **args)
 {
-	user_open* userOpen = (user_open*)malloc(sizeof(user_open));
-	userOpen->f_fcb = findFcb(sb, filePath);
-	if (userOpen->f_fcb == NULL || userOpen->f_fcb->attribute == DIRECTORY)
-	{
-		printf("There is no such file!");
-		return NULL;
-	}
-	userOpen->mode = mode;
-	return userOpen;
+    //参数为空
+    if (args[1] == NULL) {
+        fprintf(stderr, "open: missing argument!\n");
+        return 1;
+    }
+    // -l查看所有已经打开的文件
+    if (args[1][0] == '-') {
+        if (!strcmp(args[1], "-l")) {
+            printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
+            for (int i = 0; i < MAX_OPEN_FILE; i++) {
+                if(!open_file_list[i].is_empty){
+                    printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n", open_file_list[i].f_fcb->filename, open_file_list[i].f_fcb->length,
+                           open_file_list[i].f_fcb->attribute == 1 ? "directory" : "file", open_file_list[i].f_fcb->create_time.tm_year + BASE_YEAR,
+                           open_file_list[i].f_fcb->create_time.tm_mon, open_file_list[i].f_fcb->create_time.tm_mday, open_file_list[i].f_fcb->create_time.tm_hour, open_file_list[i].f_fcb->create_time.tm_min,
+                           open_file_list[i].f_fcb->last_modify_time.tm_year + BASE_YEAR, open_file_list[i].f_fcb->last_modify_time.tm_mon, open_file_list[i].f_fcb->last_modify_time.tm_mday,
+                           open_file_list[i].f_fcb->last_modify_time.tm_hour, open_file_list[i].f_fcb->last_modify_time.tm_min);
+                }
+            }
+            return 1;
+        } else {
+            fprintf(stderr, "\"open error\": wrong argument\n");
+            return 1;
+        }
+    }
+    char *filePath =NULL;
+    char *mode = NULL;
+    if(args[1]!=NULL){
+        filePath = args[1];
+    }else{
+        fprintf(stderr, "\"open error\": cannot open %s: No such file or folder\n", args[1]);
+        return 1;
+    }
+    if(args[2]==NULL){
+        mode = "r";
+    }
+    do_open(sb,filePath,mode);
+	return 1;
 }
 
 /**
@@ -74,7 +134,7 @@ user_open* my_open(super_block* sb, char* filePath, int mode)
  * @return
  */
 
-void* my_ls(super_block* sb, char** args)
+int my_ls(super_block* sb, char** args)
 {
     char * filePath =NULL;
     if(args[1]!=NULL){
@@ -88,7 +148,8 @@ void* my_ls(super_block* sb, char** args)
 	fcb* dirFcb = findFcb(sb, filePath);
 	if (dirFcb == NULL || dirFcb->attribute == ORDINARY_FILE)
 	{
-		printf("There is no such file!\n");
+        fprintf(stderr, "\"ls\": cannot open %s: No such file or folder\n", filePath);
+        return 1;
 	}
 	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
 	inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
@@ -102,29 +163,42 @@ void* my_ls(super_block* sb, char** args)
 			ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
 	}
 	printf("\n");
+    return 1;
 }
 
-void* my_cd(super_block* sb, char** args)
+int my_cd(super_block* sb, char** args)
 {
+    int fd;
     char * filePath =NULL;
     if(args[1]!=NULL){
         filePath = args[1];
     }
-    if (filePath == NULL)
-    {
+    if (filePath == NULL){
         filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
         strcpy(filePath, current_dir_name);
     }
 	fcb* fcb = findFcb(sb, filePath);
-	if (fcb != NULL)
-	{
-		memcpy(current_dir, fcb, sizeof(fcb));
-		getFullPath(current_dir_name, filePath);
-	}
-	else
-	{
-		printf("There is no such directory!\n");
-	}
+	if (fcb == NULL) {
+        fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
+        return 1;
+    }
+    // 如果文件已经打开
+    for (int i = 0; i < MAX_OPEN_FILE; i++) {
+        if (open_file_list[i].is_empty == 0) {
+            if (fcb == open_file_list->f_fcb) {
+                memcpy(current_dir, fcb, sizeof(fcb));
+                getFullPath(current_dir_name, filePath);
+                return 1;
+            }
+        }
+    }
+    // 文件未打开，需要先打开这个文件然后再cd过去
+    if ((fd = do_open(sb,filePath,"rw")) > 0) {
+        current_dir_fd = fd;
+        memcpy(current_dir, fcb, sizeof(fcb));
+        getFullPath(current_dir_name, filePath);
+    }
+    return 1;
 }
 
 void my_mkdir(super_block* sb, char* dirname)

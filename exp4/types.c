@@ -3,8 +3,8 @@
 #include "file.h"
 
 fcb* current_dir;
-user_open  open_file_list[MAX_OPEN_FILE];
-int current_dir_fd;
+user_open open_file_list[MAX_OPEN_FILE];
+int current_dir_fd;  //当前打开文件的文件描述符
 char current_dir_name[_MAX_PATH] = "/";
 //维护一个所有命令的数组
 char cmd[13][6] = {
