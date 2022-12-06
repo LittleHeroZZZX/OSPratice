@@ -148,7 +148,7 @@ int my_open(super_block* sb, char **args)
         }
     }
 
-    //可以打开一个目录文件，但并不会更改当前工作目录。
+    //可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
     do_open(sb,filePath,mode);
 
 	return 1;
@@ -211,11 +211,12 @@ int my_cd(super_block* sb, char** args)
     }
 
 	fcb* fcb = findFcb(sb, filePath);
-
+    //找不到这个文件
 	if (fcb == NULL) {
         fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
         return 1;
     }
+    //不能cd到一个文件
     if(fcb->attribute==ORDINARY_FILE){
         fprintf(stderr, "\"cd\" error: cannot open %s: It is a file!\n", filePath);
         return 1;

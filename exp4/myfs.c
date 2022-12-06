@@ -269,18 +269,23 @@ void show_csh(super_block* sb){
         printf("%s >",current_dir_name);
         getLine(cmd, MAX_CMD_LENGTH, stdin);
         args = getArgs(cmd);
-/*        for (char **ptr =args; *ptr!=NULL; ptr++)  //遍历参数
+        status = execute(sb,args);
+
+/* 遍历参数
+ * for (char **ptr =args; *ptr!=NULL; ptr++)
             printf("arg :%s\n",*ptr);*/
-        if(open_file_list[current_dir_fd].f_fcb->attribute == ORDINARY_FILE){
-            // 如果当前在文件中，read,write除外的其他命令不能使用。
-            if(!strcmp(args[1],"write")||!strcmp(args[1],"read")){
+
+/* 可以cd到一个文件的情况
+ * if(open_file_list[current_dir_fd].f_fcb->attribute == ORDINARY_FILE){
+            // 如果当前在文件中，read,write,close除外的其他命令不能使用。
+            if(!strcmp(args[1],"write")||!strcmp(args[1],"read")||!strcmp(args[1],"close")){
                 status = execute(sb,args);
             } else{
                 fprintf(stderr, "\"%s error\": Now in the file, the command cannot be used!\n",args[1]);
             }
         }else{
             status = execute(sb,args);
-        }
+        }*/
     }while (status);
 }
 
