@@ -88,7 +88,7 @@ int do_open(super_block* sb, char* filePath,char *mode){
 }
 
 /**
- * 打开单个文件 ，-l查看所有打开的文件
+ * 打开单个文件或者目录文件 ，-l查看所有打开的文件
  * @param sb
  * @param args
  * @return
@@ -101,6 +101,7 @@ int my_open(super_block* sb, char **args)
         fprintf(stderr, "open: missing argument!\n");
         return 1;
     }
+
     // -l查看所有已经打开的文件
     if (args[1][0] == '-') {
         if (!strcmp(args[1], "-l")) {
@@ -126,11 +127,30 @@ int my_open(super_block* sb, char **args)
     if(args[1]!=NULL){
         filePath = args[1];
     }else{
-        fprintf(stderr, "\"open error\": missing argument\n", args[1]);
+        fprintf(stderr, "\"open error\": missing path argument\n", args[1]);
         return 1;
     }
-    fd = do_open(sb,filePath,NULL);
-    getFullPath(current_dir_name, filePath);
+    if(args[1]!=NULL){
+        mode = args[2];
+    }else{
+        fprintf(stderr, "\"open error\": missing mode argument\n", args[1]);
+        return 1;
+    }
+
+    //如果当前文件已经被打开
+    fcb *fcb = findFcb(sb,filePath);
+    for (int i = 0; i < MAX_OPEN_FILE; i++) {
+        if (open_file_list[i].is_empty == 0) {
+            if (fcb == open_file_list[i].f_fcb) {
+                fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
+                return 1;
+            }
+        }
+    }
+
+    //可以打开一个目录文件，但并不会更改当前工作目录。
+    do_open(sb,filePath,mode);
+
 	return 1;
 }
 
@@ -171,8 +191,9 @@ int my_ls(super_block* sb, char** args)
 	printf("\n");
     return 1;
 }
+
 /**
- * cd 到一个文件夹或者文件。
+ * cd 更改当前工作目录
  * @param sb
  * @param args
  * @return
@@ -190,8 +211,13 @@ int my_cd(super_block* sb, char** args)
     }
 
 	fcb* fcb = findFcb(sb, filePath);
+
 	if (fcb == NULL) {
         fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
+        return 1;
+    }
+    if(fcb->attribute==ORDINARY_FILE){
+        fprintf(stderr, "\"cd\" error: cannot open %s: It is a file!\n", filePath);
         return 1;
     }
 
