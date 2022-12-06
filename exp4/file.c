@@ -88,7 +88,7 @@ int do_open(super_block* sb, char* filePath,char *mode){
 }
 
 /**
- * 打开单个文件 ，-l查看所有打开的文件
+ * 打开单个文件或者目录文件 ，-l查看所有打开的文件
  * @param sb
  * @param args
  * @return
@@ -101,6 +101,7 @@ int my_open(super_block* sb, char **args)
         fprintf(stderr, "open: missing argument!\n");
         return 1;
     }
+
     // -l查看所有已经打开的文件
     if (args[1][0] == '-') {
         if (!strcmp(args[1], "-l")) {
@@ -126,11 +127,30 @@ int my_open(super_block* sb, char **args)
     if(args[1]!=NULL){
         filePath = args[1];
     }else{
-        fprintf(stderr, "\"open error\": missing argument\n", args[1]);
+        fprintf(stderr, "\"open error\": missing path argument\n", args[1]);
         return 1;
     }
-    fd = do_open(sb,filePath,NULL);
-    getFullPath(current_dir_name, filePath);
+    if(args[1]!=NULL){
+        mode = args[2];
+    }else{
+        fprintf(stderr, "\"open error\": missing mode argument\n", args[1]);
+        return 1;
+    }
+
+    //如果当前文件已经被打开
+    fcb *fcb = findFcb(sb,filePath);
+    for (int i = 0; i < MAX_OPEN_FILE; i++) {
+        if (open_file_list[i].is_empty == 0) {
+            if (fcb == open_file_list[i].f_fcb) {
+                fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
+                return 1;
+            }
+        }
+    }
+
+    //可以打开一个目录文件，但并不会更改当前工作目录。
+    do_open(sb,filePath,mode);
+
 	return 1;
 }
 
@@ -171,8 +191,9 @@ int my_ls(super_block* sb, char** args)
 	printf("\n");
     return 1;
 }
+
 /**
- * cd 到一个文件夹或者文件。
+ * cd 更改当前工作目录
  * @param sb
  * @param args
  * @return
@@ -188,25 +209,25 @@ int my_cd(super_block* sb, char** args)
         filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
         strcpy(filePath, current_dir_name);
     }
+
 	fcb* fcb = findFcb(sb, filePath);
+
 	if (fcb == NULL) {
         fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
         return 1;
     }
-    // 如果文件已经打开
-    for (int i = 0; i < MAX_OPEN_FILE; i++) {
-        if (open_file_list[i].is_empty == 0) {
-            if (fcb == open_file_list->f_fcb) {
-                memcpy(current_dir, fcb, sizeof(fcb));
-                getFullPath(current_dir_name, filePath);
-                return 1;
-            }
-        }
+    if(fcb->attribute==ORDINARY_FILE){
+        fprintf(stderr, "\"cd\" error: cannot open %s: It is a file!\n", filePath);
+        return 1;
     }
+
+    //关闭当前目录文件
+    do_close(sb,current_dir_name);
+
     // 文件未打开，需要先打开这个文件然后再cd过去
     if ((fd = do_open(sb,filePath,"rw")) > 0) {
         current_dir_fd = fd;
-        memcpy(current_dir, fcb, sizeof(fcb));
+        current_dir = fcb;
         getFullPath(current_dir_name, filePath);
     }
     return 1;
@@ -706,6 +727,24 @@ int my_exit_sys(super_block* sb,char **args){
     return 1;
 }
 
+int do_close(super_block* sb, char* filePath){
+    fcb *fcb = findFcb(sb,filePath);
+
+    for (int i = 0; i < MAX_OPEN_FILE; i++) {
+        if (open_file_list[i].is_empty == 0) {
+            if (fcb == open_file_list[i].f_fcb) {
+                /*
+                 * 复原对应open_file_list项
+                 */
+                return 1;
+            }
+        }
+    }
+}
+
 int my_close(super_block* sb,char **args){
+    /*
+     * 相应工作然后调用close
+     */
     return 1;
 }
