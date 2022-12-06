@@ -57,7 +57,7 @@ int get_user_open()
 	{
 		if (!open_file_list[i])
 		{
-			open_file_list[i]= malloc(sizeof(user_open));
+			open_file_list[i] = malloc(sizeof(user_open));
 			return i;
 		}
 	}
@@ -154,23 +154,33 @@ int my_open(super_block* sb, char** args)
 	}
 
 	//如果当前文件已经被打开
-	fcb* fcb = findFcb(sb, filePath);
-	for (int i = 0; i < MAX_OPEN_FILE; i++)
+	if (is_file_open(filePath) != -1)
 	{
-		if (open_file_list[i])
-		{
-			if (fcb == open_file_list[i]->f_fcb)
-			{
-				fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
-				return 1;
-			}
-		}
+		fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
+		return 1;
 	}
 
 	//可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
 	do_open(sb, filePath);
 
 	return 1;
+}
+
+int is_file_open(char* filePath)
+{
+	char* fullPath = malloc(sizeof(char) * FILENAME_LEN);
+	getFullPath(fullPath, filePath);
+	for (int i = 0; i < MAX_OPEN_FILE; i++)
+	{
+		if (open_file_list[i])
+		{
+			if (strcmp(open_file_list[i]->path, fullPath) == 0)
+			{
+				return i;
+			}
+		}
+	}
+	return -1;
 }
 
 /**
@@ -247,7 +257,7 @@ int my_cd(super_block* sb, char** args)
 	}
 
 	//关闭当前目录文件
-	do_close(sb, current_dir_name);
+	do_close(current_dir_name);
 
 	// 文件未打开，需要先打开这个文件然后再cd过去
 	if ((fd = do_open(sb, filePath)) > 0)
@@ -765,7 +775,7 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 	{
 		if (strcpy(fcb->filename, "/") == 0)
 		{
-			printf("Not allowd to delete root dir\n");
+			printf("Not allowed to delete root dir\n");
 			return ERR_PARAM_INVALID;
 		}
 		else if (fcb->file_count > 2)
@@ -849,29 +859,32 @@ int my_exit_sys(super_block* sb, char** args)
 	return 1;
 }
 
-int do_close(super_block* sb, char* filePath)
+int do_close(char* filePath)
 {
-	fcb* fcb = findFcb(sb, filePath);
-
-	for (int i = 0; i < MAX_OPEN_FILE; i++)
+	int index = is_file_open(filePath);
+	if (index != -1)
 	{
-		if (open_file_list[i])
-		{
-			if (fcb == open_file_list[i]->f_fcb)
-			{
-				/*
-				 * 复原对应open_file_list项
-				 */
-				return 1;
-			}
-		}
+		free(open_file_list[index]);
+		return 0;
+	}
+	else
+	{
+		printf("File is not open.\n");
+		return -1;
 	}
 }
 
 int my_close(super_block* sb, char** args)
 {
-	/*
-	 * 相应工作然后调用close
-	 */
+	const int MAX_PARAMS_LEN = 3;
+
+	for (int i = 1; i < MAX_PARAMS_LEN; i++)
+	{
+		if (args[i] == NULL)
+		{
+			break;
+		}
+		do_close(args[i]);
+	}
 	return 1;
 }

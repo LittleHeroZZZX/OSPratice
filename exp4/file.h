@@ -47,6 +47,8 @@ int my_mkdir(super_block *sb,char *dirname);
 
 int my_pwd();
 
+int is_file_open(char* filePath);
+
 fcb *index_to_fcb(super_block *sb, size_t index);
 
 ssize_t dir_fcb_to_index(super_block *sb, fcb *fcb);
@@ -62,7 +64,5 @@ int my_create(super_block* sb,char **args);
 int my_rm(super_block* sb,char **args);
 int my_exit_sys(super_block* sb,char **args);
 int my_close(super_block* sb,char **args);
-int do_close(super_block* sb, char* filePath);
-
-
+int do_close(char* filePath);
 

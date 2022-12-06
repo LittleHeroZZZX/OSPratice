@@ -140,6 +140,12 @@ void getFullPath(char* DestFullPath, char* filePath)
    }
 }
 
+
+/**
+ * 通过文件路径找到文件的fcb*
+ * @param filePath
+ * @return fcb*
+ */
 fcb* findFcb(super_block* sb, char* filePath)
 {
 	char fullPath[_MAX_PATH];

@@ -108,7 +108,7 @@ typedef struct user_open
 	size_t f_block_start;	// 文件的第一个物理块起始地址
 	char path[256];	// 文件的完整绝对路径
 	size_t p_WR; // 读写指针，指向硬盘中的地址
-	int mode;	// 文件读写权限
+	int mode;	// 文件写入模式
 	unsigned char fcb_modified;	// 文件FCB修改判定位
 } user_open;
 
