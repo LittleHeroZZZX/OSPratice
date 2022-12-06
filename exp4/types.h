@@ -112,6 +112,8 @@ typedef struct user_open
 	unsigned char fcb_modified;	// 文件FCB修改判定位
 } user_open;
 
+
+extern super_block* sb;
 extern fcb* current_dir;
 extern char current_dir_name[_MAX_PATH];
 extern char cmd[13][6];

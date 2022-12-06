@@ -102,11 +102,18 @@ static char* left(char *dest,const char *src ,int n){
     *(p++)='\0';
     return dest;
 }
-
+/**
+ * 将目的路径和当前路径连接起来，然后进行解析，结果保存在DestFullPath中，但并不能保证目录中就有这个文件，需要配合findFcb使用
+ * @param DestFullPath
+ * @param filePath
+ */
 void getFullPath(char* DestFullPath, char* filePath)
 {
    if(filePath[0]=='/'){
-       strcpy(DestFullPath,filePath);
+	   int i=0;
+	   //遇到连续多个"///////"，忽略
+	   for (i = 0; filePath[i]=='/'; ++i);
+       strcpy(DestFullPath,filePath+i-1);
    } else{
        char str[_MAX_PATH];
        strcpy(str,current_dir_name);
@@ -115,9 +122,9 @@ void getFullPath(char* DestFullPath, char* filePath)
        char *token;
        token = strtok(str,"/");
        while (token!=NULL){
-           char fname[_MAX_FNAME];
-           strcpy(fname,token);
-           if(!strcmp(fname,"..")){
+           char fileName[_MAX_FNAME];
+           strcpy(fileName,token);
+           if(!strcmp(fileName,"..")){
                char parentPath[_MAX_PATH];
                left(parentPath,fullPath,strlen(fullPath)-1);
                char* ptr = strrchr(fullPath, '/');
@@ -129,10 +136,10 @@ void getFullPath(char* DestFullPath, char* filePath)
                } else{
                    left(fullPath,fullPath,strlen(fullPath) - strlen(ptr2));
                }
-           }else if(!strcmp(fname,".")){
+           }else if(!strcmp(fileName,".")){
            } else{
-               strcat(fname,"/");
-               strcat(fullPath,fname);
+               strcat(fileName,"/");
+               strcat(fullPath,fileName);
            }
            token = strtok(NULL,"/");
        }
@@ -144,7 +151,7 @@ void getFullPath(char* DestFullPath, char* filePath)
 /**
  * 通过文件路径找到文件的fcb*
  * @param filePath
- * @return fcb*
+ * @return fcb* 找不到则返回NULL
  */
 fcb* findFcb(super_block* sb, char* filePath)
 {

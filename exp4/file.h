@@ -64,5 +64,5 @@ int my_create(super_block* sb,char **args);
 int my_rm(super_block* sb,char **args);
 int my_exit_sys(super_block* sb,char **args);
 int my_close(super_block* sb,char **args);
-int do_close(char* filePath);
+int do_close(super_block* sb, char* filePath);
 

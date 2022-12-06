@@ -233,7 +233,7 @@ char **getArgs(char *cmd){
     char *token;
 
     if (!tokens) {
-        fprintf(stderr, "csh: allocation error\n");
+        printf( "\"csh error\": allocation error\n");
         exit(EXIT_FAILURE);
     }
 
@@ -246,7 +246,7 @@ char **getArgs(char *cmd){
             bufSize += MAX_ARG_LENGTH;
             tokens = realloc(tokens, bufSize * sizeof(char*));
             if (!tokens) {
-                fprintf(stderr, "csh: allocation error\n");
+                printf( "\"csh error\": allocation error\n");
                 exit(EXIT_FAILURE);
             }
         }
@@ -265,6 +265,7 @@ int execute(super_block* sb,char **args){
             return (*cmd_func[i])(sb,args);
         }
     }
+	printf("\"csh error\": Unknown command\n");
 }
 
 void show_csh(super_block* sb){
@@ -280,24 +281,11 @@ void show_csh(super_block* sb){
 /* 遍历参数
  * for (char **ptr =args; *ptr!=NULL; ptr++)
             printf("arg :%s\n",*ptr);*/
-
-/* 可以cd到一个文件的情况
- * if(open_file_list[current_dir_fd].f_fcb->attribute == ORDINARY_FILE){
-            // 如果当前在文件中，read,write,close除外的其他命令不能使用。
-            if(!strcmp(args[1],"write")||!strcmp(args[1],"read")||!strcmp(args[1],"close")){
-                status = execute(sb,args);
-            } else{
-                fprintf(stderr, "\"%s error\": Now in the file, the command cannot be used!\n",args[1]);
-            }
-        }else{
-            status = execute(sb,args);
-        }*/
     }while (status);
 }
 
 int main()
 {
-    super_block* sb;
     start_sys("disk", &sb, 1);
     save("disc.bak", *sb, SIZE);
     create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");

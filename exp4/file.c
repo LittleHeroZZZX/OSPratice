@@ -74,7 +74,7 @@ int do_open(super_block* sb, char* filePath)
 	int fd = get_user_open();
 	if (fd == ERR_FILE_NOT_OPENED)
 	{
-		fprintf(stderr, "\"open error\": The number of file openings is maximum\n");
+		printf("\"open error\": The number of file openings is maximum\n");
 		return -1;
 	}
 	open_file_list[fd]->f_fcb = findFcb(sb, filePath);
@@ -94,7 +94,7 @@ int my_open(super_block* sb, char** args)
 	//参数为空
 	if (args[1] == NULL)
 	{
-		fprintf(stderr, "open: missing argument!\n");
+		printf("open: missing argument!\n");
 		return 1;
 	}
 
@@ -128,7 +128,7 @@ int my_open(super_block* sb, char** args)
 		}
 		else
 		{
-			fprintf(stderr, "\"open error\": wrong argument\n");
+			printf("\"open error\": wrong argument\n");
 			return 1;
 		}
 	}
@@ -140,14 +140,19 @@ int my_open(super_block* sb, char** args)
 	}
 	else
 	{
-		fprintf(stderr, "\"open error\": missing path argument\n", args[1]);
+		printf( "\"open error\": missing path argument\n", args[1]);
+		return 1;
+	}
+	
+	if(findFcb(sb,filePath)==NULL){
+		printf( "\"open error\": cannot open %s: There is no such file or folder\n", args[1]);
 		return 1;
 	}
 
 	//如果当前文件已经被打开
 	if (is_file_open(filePath) != -1)
 	{
-		fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", filePath);
+		printf( "\"open error\": cannot open %s: File or folder is open\n", filePath);
 		return 1;
 	}
 
@@ -195,7 +200,7 @@ int my_ls(super_block* sb, char** args)
 	fcb* dirFcb = findFcb(sb, filePath);
 	if (dirFcb == NULL || dirFcb->attribute == ORDINARY_FILE)
 	{
-		fprintf(stderr, "\"ls\": cannot open %s: No such file or folder\n", filePath);
+		printf("\"ls\": cannot open %s: No such file or folder\n", filePath);
 		return 1;
 	}
 	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
@@ -232,35 +237,43 @@ int my_cd(super_block* sb, char** args)
 		filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
 		strcpy(filePath, current_dir_name);
 	}
-
+	
+	getFullPath(filePath,filePath);
+	
+	//cd 到当前目录
+	if(!strcmp(filePath,current_dir_name)){
+		return 1;
+	}
+	
 	fcb* fcb = findFcb(sb, filePath);
 	//找不到这个文件
 	if (fcb == NULL)
 	{
-		fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
+		printf( "\"cd\" error: cannot open %s: No such folder\n", filePath);
 		return 1;
 	}
 	//不能cd到一个文件
 	if (fcb->attribute == ORDINARY_FILE)
 	{
-		fprintf(stderr, "\"cd\" error: cannot open %s: It is a file!\n", filePath);
+		printf("\"cd\" error: cannot open %s: It is a file!\n", filePath);
 		return 1;
 	}
-
+	
 	char* old_current_dir_name = malloc(sizeof(char*) * FILENAME_LEN);
 	strcpy(old_current_dir_name, current_dir_name);
-
-	// 文件未打开，需要先打开这个文件然后再cd过去
+	
+	// 如果文件未打开，需要先打开这个文件然后再cd过去
 	fd = is_file_open(filePath);
 	current_dir_fd = fd == -1 ? do_open(sb, filePath) : fd;
 	current_dir = fcb;
 	getFullPath(current_dir_name, filePath);
-
+	
 	//关闭旧的目录文件
-	do_close(old_current_dir_name);
-
+	do_close(sb,old_current_dir_name);
+	
 	free(old_current_dir_name);
-
+	
+	
 	return 1;
 }
 
@@ -858,15 +871,19 @@ int my_exit_sys(super_block* sb, char** args)
 	return 1;
 }
 
-int do_close(char* filePath)
+int do_close(super_block* sb, char* filePath)
 {
+	if(findFcb(sb,filePath)==NULL){
+		printf( "\"close error\": cannot open %s: There is no such file or folder\n", filePath);
+		return 1;
+	}
 	int index = is_file_open(filePath);
 	if (index != -1)
 	{
 		//	当前工作路径无法close
 		if (!strcmp(open_file_list[index]->path, current_dir_name))
 		{
-			fprintf(stderr,
+			printf(
 				"\"close\" error: cannot close %s: The current working path cannot be closed, please exit the directory first\n",
 				filePath);
 			return -1;
@@ -891,7 +908,7 @@ int my_close(super_block* sb, char** args)
 	char** p = args;
 	for (p++; *p != NULL; p++)
 	{
-		do_close(*p);
+		do_close(sb,*p);
 	}
 	return 1;
 }
