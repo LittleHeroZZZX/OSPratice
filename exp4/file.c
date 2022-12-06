@@ -533,8 +533,8 @@ void save_blocks(super_block* sb, fcb* fcb, size_t* blocks, size_t block_cnt)
 }
 
 /**
- * @param fcb 文件控制块
  * 更新文件fcb，该操作会更新文件的修改时间
+ * @param fcb 文件控制块
  * @param attribute 属性
  * @param length 文件大小
  */
@@ -582,6 +582,7 @@ ssize_t create_dir(super_block* sb, fcb* dir, char* filename)
 	if (index < 0) return index;
 	fcb* fcb = index_to_fcb(sb, index);
 	fcb->file_count = 2;
+    fcb->attribute = DIRECTORY;
 	size_t dir_index[2];
 	inode dir_inode[2];
 	dir_index[0] = index;
@@ -613,31 +614,63 @@ ssize_t create_file(super_block* sb, fcb* dir, char* filename, size_t size, void
 		do_write(sb, fcb, content, size);
 	return index;
 }
-
+/**
+ * 从dir目录中删除fcb文件
+ * @param sb 超级块
+ * @param fcb 文件
+ * @param dir 目录
+ * @return 0成功  <0错误
+ */
 ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 {
 //    todo
 	if (fcb->attribute == DIRECTORY)
 	{
-		if (fcb->file_count > 2)
+        if (strcpy(fcb->filename, "/") == 0) {
+            printf("Not allowd to delete root dir\n");
+            return ERR_PARAM_INVALID;
+        }
+		else if (fcb->file_count > 2)
 		{
 			printf("directory is not empty\n");
 			return ERR_PARAM_INVALID;
 		}
 		else
 		{
-			fcb->file_count = 0;
-			fcb->length = 0;
-			fcb->attribute = 0;
-			dir->file_count--;
-			return 0;
+			// 释放文件blocks,把fcb的is_used置为0（在索引节点表中删除），在dir的文件内容中删除该文件的inode
+            size_t *blocks = get_blocks(sb, fcb);
+            size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+            for (size_t i = 0; i < block_cnt; i++) {
+                free_block(sb, blocks[i], 1);
+            }
+            free(blocks);
+            fcb->is_used = 0;
+//            todo clear file
+
+
 		}
 	}
 }
 
+/**
+ * 清除文件内容
+ * @param sb
+ * @param fcb
+ */
 void clear_file(super_block* sb, fcb* fcb)
 {
-//    todo
+    size_t* blocks = get_blocks(sb, fcb);
+    size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+    for (size_t i = 0; i < block_cnt; i++)
+    {
+        free_block(sb, blocks[i], 1);
+    }
+    free(blocks);
+    if (fcb->attribute == ORDINARY_FILE)
+        update_fcb(fcb, fcb->attribute, 0, 0, 0);
+    else
+        update_fcb(fcb, fcb->attribute, 0, 2, 0);
 
 }
 
