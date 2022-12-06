@@ -188,25 +188,20 @@ int my_cd(super_block* sb, char** args)
         filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
         strcpy(filePath, current_dir_name);
     }
+
 	fcb* fcb = findFcb(sb, filePath);
 	if (fcb == NULL) {
         fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
         return 1;
     }
-    // 如果文件已经打开
-    for (int i = 0; i < MAX_OPEN_FILE; i++) {
-        if (open_file_list[i].is_empty == 0) {
-            if (fcb == open_file_list->f_fcb) {
-                memcpy(current_dir, fcb, sizeof(fcb));
-                getFullPath(current_dir_name, filePath);
-                return 1;
-            }
-        }
-    }
+
+    //关闭当前目录文件
+    do_close(sb,current_dir_name);
+
     // 文件未打开，需要先打开这个文件然后再cd过去
     if ((fd = do_open(sb,filePath,"rw")) > 0) {
         current_dir_fd = fd;
-        memcpy(current_dir, fcb, sizeof(fcb));
+        current_dir = fcb;
         getFullPath(current_dir_name, filePath);
     }
     return 1;
@@ -674,6 +669,24 @@ int my_exit_sys(super_block* sb,char **args){
     return 1;
 }
 
+int do_close(super_block* sb, char* filePath){
+    fcb *fcb = findFcb(sb,filePath);
+
+    for (int i = 0; i < MAX_OPEN_FILE; i++) {
+        if (open_file_list[i].is_empty == 0) {
+            if (fcb == open_file_list[i].f_fcb) {
+                /*
+                 * 复原对应open_file_list项
+                 */
+                return 1;
+            }
+        }
+    }
+}
+
 int my_close(super_block* sb,char **args){
+    /*
+     * 相应工作然后调用close
+     */
     return 1;
 }
