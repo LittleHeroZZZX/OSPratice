@@ -274,7 +274,8 @@ int my_mkdir(super_block* sb, char** args)
 
 	fcb* dirFcb = current_dir;
 	inode* p_inode = (inode*)do_read(sb, dirFcb, 0);
-	 for (char **p =args; *p!=NULL; p++){
+	char **p =args;
+	for (p++;*p!=NULL; p++){
 		 for (int i = 0; i < dirFcb->file_count; ++i)
 		 {
 			 fcb* _fcb = index_to_fcb(sb, p_inode[i].inode_index);
