@@ -6,8 +6,8 @@ fcb* current_dir;
 user_open  open_file_list[MAX_OPEN_FILE];
 int current_dir_fd;
 char current_dir_name[_MAX_PATH] = "/";
-
-char cmd[12][6] = {
+//维护一个所以命令的数组
+char cmd[13][6] = {
         "cd",
         "mkdir",
         "rmdir",
@@ -22,6 +22,7 @@ char cmd[12][6] = {
         "close",
         "pwd"
 };
+//维护一个函数地址指针的数组
 int (*cmd_func[])(super_block* sb,char **) = {
         &my_cd,
         &my_mkdir,
