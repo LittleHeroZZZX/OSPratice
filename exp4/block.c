@@ -44,6 +44,13 @@ ssize_t allocate_block(super_block* sb, size_t block_count)
 
 }
 
+/**
+ * 物理磁盘块号转物理地址
+ * @param sb
+ * @param index 物理磁盘块号
+ * @return 物理地址
+ */
+
 void* index_to_addr(super_block* sb, size_t index)
 {
 	return sb->start_pos + index * BLOCK_SIZE;

@@ -50,14 +50,17 @@ ssize_t do_create_file(super_block* sb, fcb* dir, char* filename, unsigned char 
  * 从open_file_list获取一个未被使用的user_open
  * @return 找到返回对应的下标，满了返回-1
  */
-int get_user_open() {
-    int i;
-    for (i = 0; i < MAX_OPEN_FILE; i++) {
-        if (open_file_list[i].is_empty) {
-            return i;
-        }
-    }
-    return -1;
+int get_user_open()
+{
+	int i;
+	for (i = 0; i < MAX_OPEN_FILE; i++)
+	{
+		if (open_file_list[i].is_empty)
+		{
+			return i;
+		}
+	}
+	return -1;
 }
 /**
  * 根据文件路径和打开模式打开文件，加入open_file_list中
@@ -66,25 +69,34 @@ int get_user_open() {
  * @param mode 文件打开模式，传入NULL默认为“r”
  * @return open_file_list 的下标
  */
-int do_open(super_block* sb, char* filePath,char *mode){
-    int fd = get_user_open();
-    if (fd==-1){
-        fprintf(stderr, "\"open error\": The number of file openings is maximum\n");
-        return -1;
-    }
-    open_file_list[fd].f_fcb = findFcb(sb,filePath);
-    open_file_list[fd].is_empty = 0;
-    if (strcmp(mode,"r")){
-        open_file_list[fd].mode = READ;
-    } else if(!strcmp(mode,"w")){
-        open_file_list[fd].mode = WRITE;
-    } else if(strcmp(mode,"a")){
-        open_file_list[fd].mode = WRITE;
-    } else{
-        fprintf(stderr, "\"open error\": The %s mode could not be found\n", mode);
-        return -1;
-    }
-    return fd;
+int do_open(super_block* sb, char* filePath, char* mode)
+{
+	int fd = get_user_open();
+	if (fd == -1)
+	{
+		fprintf(stderr, "\"open error\": The number of file openings is maximum\n");
+		return -1;
+	}
+	open_file_list[fd].f_fcb = findFcb(sb, filePath);
+	open_file_list[fd].is_empty = 0;
+	if (strcmp(mode, "r"))
+	{
+		open_file_list[fd].mode = READ;
+	}
+	else if (!strcmp(mode, "w"))
+	{
+		open_file_list[fd].mode = WRITE;
+	}
+	else if (strcmp(mode, "a"))
+	{
+		open_file_list[fd].mode = WRITE;
+	}
+	else
+	{
+		fprintf(stderr, "\"open error\": The %s mode could not be found\n", mode);
+		return -1;
+	}
+	return fd;
 }
 
 /**
@@ -93,63 +105,88 @@ int do_open(super_block* sb, char* filePath,char *mode){
  * @param args
  * @return
  */
-int my_open(super_block* sb, char **args)
+int my_open(super_block* sb, char** args)
 {
-    int fd;
-    //参数为空
-    if (args[1] == NULL) {
-        fprintf(stderr, "open: missing argument!\n");
-        return 1;
-    }
+	int fd;
+	//参数为空
+	if (args[1] == NULL)
+	{
+		fprintf(stderr, "open: missing argument!\n");
+		return 1;
+	}
 
-    // -l查看所有已经打开的文件
-    if (args[1][0] == '-') {
-        if (!strcmp(args[1], "-l")) {
-            printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
-            for (int i = 0; i < MAX_OPEN_FILE; i++) {
-                if(!open_file_list[i].is_empty){
-                    printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n", open_file_list[i].f_fcb->filename, open_file_list[i].f_fcb->length,
-                           open_file_list[i].f_fcb->attribute == 1 ? "directory" : "file", open_file_list[i].f_fcb->create_time.tm_year + BASE_YEAR,
-                           open_file_list[i].f_fcb->create_time.tm_mon, open_file_list[i].f_fcb->create_time.tm_mday, open_file_list[i].f_fcb->create_time.tm_hour, open_file_list[i].f_fcb->create_time.tm_min,
-                           open_file_list[i].f_fcb->last_modify_time.tm_year + BASE_YEAR, open_file_list[i].f_fcb->last_modify_time.tm_mon, open_file_list[i].f_fcb->last_modify_time.tm_mday,
-                           open_file_list[i].f_fcb->last_modify_time.tm_hour, open_file_list[i].f_fcb->last_modify_time.tm_min);
-                }
-            }
-            return 1;
-        } else {
-            fprintf(stderr, "\"open error\": wrong argument\n");
-            return 1;
-        }
-    }
+	// -l查看所有已经打开的文件
+	if (args[1][0] == '-')
+	{
+		if (!strcmp(args[1], "-l"))
+		{
+			printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
+			for (int i = 0; i < MAX_OPEN_FILE; i++)
+			{
+				if (!open_file_list[i].is_empty)
+				{
+					printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n",
+						open_file_list[i].f_fcb->filename,
+						open_file_list[i].f_fcb->length,
+						open_file_list[i].f_fcb->attribute == 1 ? "directory" : "file",
+						open_file_list[i].f_fcb->create_time.tm_year + BASE_YEAR,
+						open_file_list[i].f_fcb->create_time.tm_mon,
+						open_file_list[i].f_fcb->create_time.tm_mday,
+						open_file_list[i].f_fcb->create_time.tm_hour,
+						open_file_list[i].f_fcb->create_time.tm_min,
+						open_file_list[i].f_fcb->last_modify_time.tm_year + BASE_YEAR,
+						open_file_list[i].f_fcb->last_modify_time.tm_mon,
+						open_file_list[i].f_fcb->last_modify_time.tm_mday,
+						open_file_list[i].f_fcb->last_modify_time.tm_hour,
+						open_file_list[i].f_fcb->last_modify_time.tm_min);
+				}
+			}
+			return 1;
+		}
+		else
+		{
+			fprintf(stderr, "\"open error\": wrong argument\n");
+			return 1;
+		}
+	}
 
-    char *filePath =NULL;
-    char *mode = NULL;
-    if(args[1]!=NULL){
-        filePath = args[1];
-    }else{
-        fprintf(stderr, "\"open error\": missing path argument\n", args[1]);
-        return 1;
-    }
-    if(args[1]!=NULL){
-        mode = args[2];
-    }else{
-        fprintf(stderr, "\"open error\": missing mode argument\n", args[1]);
-        return 1;
-    }
+	char* filePath = NULL;
+	char* mode = NULL;
+	if (args[1] != NULL)
+	{
+		filePath = args[1];
+	}
+	else
+	{
+		fprintf(stderr, "\"open error\": missing path argument\n", args[1]);
+		return 1;
+	}
+	if (args[1] != NULL)
+	{
+		mode = args[2];
+	}
+	else
+	{
+		fprintf(stderr, "\"open error\": missing mode argument\n", args[1]);
+		return 1;
+	}
 
-    //如果当前文件已经被打开
-    fcb *fcb = findFcb(sb,filePath);
-    for (int i = 0; i < MAX_OPEN_FILE; i++) {
-        if (open_file_list[i].is_empty == 0) {
-            if (fcb == open_file_list[i].f_fcb) {
-                fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
-                return 1;
-            }
-        }
-    }
+	//如果当前文件已经被打开
+	fcb* fcb = findFcb(sb, filePath);
+	for (int i = 0; i < MAX_OPEN_FILE; i++)
+	{
+		if (open_file_list[i].is_empty == 0)
+		{
+			if (fcb == open_file_list[i].f_fcb)
+			{
+				fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
+				return 1;
+			}
+		}
+	}
 
-    //可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
-    do_open(sb,filePath,mode);
+	//可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
+	do_open(sb, filePath, mode);
 
 	return 1;
 }
@@ -162,10 +199,11 @@ int my_open(super_block* sb, char **args)
  */
 int my_ls(super_block* sb, char** args)
 {
-    char * filePath =NULL;
-    if(args[1]!=NULL){
-        filePath = args[1];
-    }
+	char* filePath = NULL;
+	if (args[1] != NULL)
+	{
+		filePath = args[1];
+	}
 	if (filePath == NULL)
 	{
 		filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
@@ -174,8 +212,8 @@ int my_ls(super_block* sb, char** args)
 	fcb* dirFcb = findFcb(sb, filePath);
 	if (dirFcb == NULL || dirFcb->attribute == ORDINARY_FILE)
 	{
-        fprintf(stderr, "\"ls\": cannot open %s: No such file or folder\n", filePath);
-        return 1;
+		fprintf(stderr, "\"ls\": cannot open %s: No such file or folder\n", filePath);
+		return 1;
 	}
 	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
 	inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
@@ -189,7 +227,7 @@ int my_ls(super_block* sb, char** args)
 			ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
 	}
 	printf("\n");
-    return 1;
+	return 1;
 }
 
 /**
@@ -200,38 +238,43 @@ int my_ls(super_block* sb, char** args)
  */
 int my_cd(super_block* sb, char** args)
 {
-    int fd;
-    char * filePath =NULL;
-    if(args[1]!=NULL){
-        filePath = args[1];
-    }
-    if (filePath == NULL){
-        filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
-        strcpy(filePath, current_dir_name);
-    }
+	int fd;
+	char* filePath = NULL;
+	if (args[1] != NULL)
+	{
+		filePath = args[1];
+	}
+	if (filePath == NULL)
+	{
+		filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
+		strcpy(filePath, current_dir_name);
+	}
 
 	fcb* fcb = findFcb(sb, filePath);
-    //找不到这个文件
-	if (fcb == NULL) {
-        fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
-        return 1;
-    }
-    //不能cd到一个文件
-    if(fcb->attribute==ORDINARY_FILE){
-        fprintf(stderr, "\"cd\" error: cannot open %s: It is a file!\n", filePath);
-        return 1;
-    }
+	//找不到这个文件
+	if (fcb == NULL)
+	{
+		fprintf(stderr, "\"cd\" error: cannot open %s: No such folder\n", filePath);
+		return 1;
+	}
+	//不能cd到一个文件
+	if (fcb->attribute == ORDINARY_FILE)
+	{
+		fprintf(stderr, "\"cd\" error: cannot open %s: It is a file!\n", filePath);
+		return 1;
+	}
 
-    //关闭当前目录文件
-    do_close(sb,current_dir_name);
+	//关闭当前目录文件
+	do_close(sb, current_dir_name);
 
-    // 文件未打开，需要先打开这个文件然后再cd过去
-    if ((fd = do_open(sb,filePath,"rw")) > 0) {
-        current_dir_fd = fd;
-        current_dir = fcb;
-        getFullPath(current_dir_name, filePath);
-    }
-    return 1;
+	// 文件未打开，需要先打开这个文件然后再cd过去
+	if ((fd = do_open(sb, filePath, "rw")) > 0)
+	{
+		current_dir_fd = fd;
+		current_dir = fcb;
+		getFullPath(current_dir_name, filePath);
+	}
+	return 1;
 }
 
 void my_mkdir(super_block* sb, char* dirname)
@@ -259,8 +302,8 @@ void my_mkdir(super_block* sb, char* dirname)
 
 int my_pwd()
 {
-	printf("%s\n",current_dir_name);
-    return 1;
+	printf("%s\n", current_dir_name);
+	return 1;
 }
 
 /**
@@ -341,6 +384,102 @@ void my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
 	return;
 }
 
+int my_write(super_block* sb, char** args)
+{
+	if (args[1] == NULL)
+	{
+		printf("Please input the file name.\n");
+		return 1;
+	}
+
+	int mode = APPEND; // 默认追加模式
+	int offset = 0;
+	user_open* _user_open = NULL;
+
+	// 写入模式
+	if (args[2])
+	{
+		if (!strcmp(args[2], "-a"))
+		{
+			mode = APPEND;
+		}
+		else if (!strcmp(args[2], "-t"))
+		{
+			mode = TRUNCATE;
+		}
+		else if (!strcmp(args[2], "-o"))
+		{
+			if (args[3] == NULL)
+			{
+				printf("Argument is missing for mode OVERRIDE.\n");
+				return 1;
+			}
+			else
+			{
+				offset = atoi(args[3]);
+			}
+			mode = OVERRIDE;
+		}
+	}
+
+	// 从文件打开列表定位待写入文件
+	for (int i = 0; i < open_file_count; i++)
+	{
+		if (!strcmp(open_file_list[i].f_fcb->filename, args[1]))
+		{
+			if (open_file_list[i].f_fcb->attribute == DIRECTORY)
+			{
+				printf("File trying to write is not a directory!\n");
+				return 1;
+			}
+			_user_open = &open_file_list[i];
+			break;
+		}
+	}
+	_user_open->mode = mode;
+	char* buf = do_read_ch(stdin);
+	_do_write(sb, _user_open, buf, sizeof(buf));
+
+	return 1;
+}
+
+
+/**
+ * 从输入流读取字符序列，直到遇到结束符EOF
+ * @param stream 输入流
+ * @return 字符串void*
+ */
+
+// 从输入流读取字符序列，直到遇到结束符EOF
+void* do_read_ch(void* stream)
+{
+	getchar();
+	const int BUFFER_BASE = 512;
+	int buf_size = BUFFER_BASE;
+	char* buf = malloc(buf_size * sizeof(char));
+	char ch;
+	int i = 0;
+	while ((ch = fgetc(stream)) != EOF)
+	{
+		if (i + 1 >= buf_size)
+		{
+			buf_size += BUFFER_BASE;
+			void* old_buf = buf;
+			char* new_buf = malloc(buf_size * sizeof(char));
+			memcpy(new_buf, old_buf, i * sizeof(char));
+			free(old_buf);
+			buf = new_buf;
+		}
+		buf[i++] = ch;
+	}
+	buf[i] = '\0';
+
+	char* final_buf = malloc(i * sizeof(char));
+	memcpy(final_buf, buf, i * sizeof(char));
+	free(buf);
+	return final_buf;
+}
+
 /**
  * 写入文件
  * @param sb 超级块
@@ -349,20 +488,8 @@ void my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
  * @param size 写入的长度
  * @return
  */
-void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
+void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 {
-	if (!sb | !_user_open || !buf)return;
-	if (_user_open->f_fcb->attribute == DIRECTORY)
-	{
-		printf("File to write is not a file!\n");
-		return;
-	}
-	if (!(_user_open->mode & WRITE))
-	{
-		printf("File to write is not writable!\n");
-		return;
-	}
-
 	fcb* _fcb = _user_open->f_fcb;
 	size_t* old_blocks, * new_blocks;
 	size_t old_block_cnt = (_fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -373,10 +500,9 @@ void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 	size_t size_to_write = 0;
 	int mode = _user_open->mode;
 
-	switch (mode & APPEND)
+	switch (mode & 0b111)
 	{
-	case 0b100:
-		// append mode
+	case APPEND:
 		_user_open->p_WR = _fcb->length;
 		old_blocks = get_blocks(sb, _fcb);
 		new_block_size = _fcb->length + size;
@@ -388,8 +514,7 @@ void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 			rest_size -= size_to_write;
 			_user_open->p_WR += size_to_write;
 		}
-		new_blocks = (size_t*)malloc(sizeof(size_t) * new_block_cnt);
-		for (size_t i = 0; i < old_block_cnt; i++)
+		for (size_t i = old_block_cnt; i < new_block_cnt; i++)
 		{
 			new_blocks[i] = allocate_block(sb, 1);
 			size_to_write = rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size;
@@ -398,13 +523,11 @@ void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 			_user_open->p_WR += size_to_write;
 		}
 		break;
-	case 0b000:
-		// override mode
+	case TRUNCATE:
 		_user_open->p_WR = 0;
 		free_block(sb, _user_open->f_block_start, old_block_cnt);
 		new_block_size = size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-		new_blocks = (size_t*)malloc(sizeof(size_t) * new_block_cnt);
 		for (size_t i = 0; i < new_block_cnt; i++)
 		{
 			new_blocks[i] = allocate_block(sb, 1);
@@ -413,6 +536,21 @@ void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 			rest_size -= size_to_write;
 			_user_open->p_WR += size_to_write;
 		}
+		break;
+	case OVERRIDE:
+		new_block_size = size > (_fcb->length - _user_open->p_WR) ? _user_open->p_WR + size : size;
+		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		new_blocks = (size_t*)malloc(sizeof(size_t) * new_block_cnt);
+		for (size_t i = 0; i < new_block_cnt; i++)
+		{
+			new_blocks[i] = allocate_block(sb, 1);
+			size_to_write = rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size;
+			memcpy((void*)_user_open->p_WR, buf + size - rest_size, size_to_write);
+			rest_size -= size_to_write;
+			_user_open->p_WR += size_to_write;
+		}
+		break;
+	default:
 		break;
 	}
 	save_blocks(sb, _fcb, new_blocks, new_block_cnt);
@@ -604,7 +742,7 @@ ssize_t create_dir(super_block* sb, fcb* dir, char* filename)
 	if (index < 0) return index;
 	fcb* fcb = index_to_fcb(sb, index);
 	fcb->file_count = 2;
-    fcb->attribute = DIRECTORY;
+	fcb->attribute = DIRECTORY;
 	size_t dir_index[2];
 	inode dir_inode[2];
 	dir_index[0] = index;
@@ -648,10 +786,11 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 //    todo
 	if (fcb->attribute == DIRECTORY)
 	{
-        if (strcpy(fcb->filename, "/") == 0) {
-            printf("Not allowd to delete root dir\n");
-            return ERR_PARAM_INVALID;
-        }
+		if (strcpy(fcb->filename, "/") == 0)
+		{
+			printf("Not allowd to delete root dir\n");
+			return ERR_PARAM_INVALID;
+		}
 		else if (fcb->file_count > 2)
 		{
 			printf("directory is not empty\n");
@@ -660,13 +799,14 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 		else
 		{
 			// 释放文件blocks,把fcb的is_used置为0（在索引节点表中删除），在dir的文件内容中删除该文件的inode
-            size_t *blocks = get_blocks(sb, fcb);
-            size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-            for (size_t i = 0; i < block_cnt; i++) {
-                free_block(sb, blocks[i], 1);
-            }
-            free(blocks);
-            fcb->is_used = 0;
+			size_t* blocks = get_blocks(sb, fcb);
+			size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+			for (size_t i = 0; i < block_cnt; i++)
+			{
+				free_block(sb, blocks[i], 1);
+			}
+			free(blocks);
+			fcb->is_used = 0;
 //            todo clear file
 
 
@@ -681,18 +821,18 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
  */
 void clear_file(super_block* sb, fcb* fcb)
 {
-    size_t* blocks = get_blocks(sb, fcb);
-    size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	size_t* blocks = get_blocks(sb, fcb);
+	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-    for (size_t i = 0; i < block_cnt; i++)
-    {
-        free_block(sb, blocks[i], 1);
-    }
-    free(blocks);
-    if (fcb->attribute == ORDINARY_FILE)
-        update_fcb(fcb, fcb->attribute, 0, 0, 0);
-    else
-        update_fcb(fcb, fcb->attribute, 0, 2, 0);
+	for (size_t i = 0; i < block_cnt; i++)
+	{
+		free_block(sb, blocks[i], 1);
+	}
+	free(blocks);
+	if (fcb->attribute == ORDINARY_FILE)
+		update_fcb(fcb, fcb->attribute, 0, 0, 0);
+	else
+		update_fcb(fcb, fcb->attribute, 0, 2, 0);
 
 }
 
@@ -712,40 +852,49 @@ ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb)
 	return index;
 }
 
-int my_rmdir(super_block* sb,char **args){
-    return 1;
+int my_rmdir(super_block* sb, char** args)
+{
+	return 1;
 }
 
-int my_create(super_block* sb,char **args){
-    return 1;
+int my_create(super_block* sb, char** args)
+{
+	return 1;
 }
 
-int my_rm(super_block* sb,char **args){
-    return 1;
+int my_rm(super_block* sb, char** args)
+{
+	return 1;
 }
 
-int my_exit_sys(super_block* sb,char **args){
-    return 1;
+int my_exit_sys(super_block* sb, char** args)
+{
+	return 1;
 }
 
-int do_close(super_block* sb, char* filePath){
-    fcb *fcb = findFcb(sb,filePath);
+int do_close(super_block* sb, char* filePath)
+{
+	fcb* fcb = findFcb(sb, filePath);
 
-    for (int i = 0; i < MAX_OPEN_FILE; i++) {
-        if (open_file_list[i].is_empty == 0) {
-            if (fcb == open_file_list[i].f_fcb) {
-                /*
-                 * 复原对应open_file_list项
-                 */
-                return 1;
-            }
-        }
-    }
+	for (int i = 0; i < MAX_OPEN_FILE; i++)
+	{
+		if (open_file_list[i].is_empty == 0)
+		{
+			if (fcb == open_file_list[i].f_fcb)
+			{
+				/*
+				 * 复原对应open_file_list项
+				 */
+				return 1;
+			}
+		}
+	}
 }
 
-int my_close(super_block* sb,char **args){
-    /*
-     * 相应工作然后调用close
-     */
-    return 1;
+int my_close(super_block* sb, char** args)
+{
+	/*
+	 * 相应工作然后调用close
+	 */
+	return 1;
 }

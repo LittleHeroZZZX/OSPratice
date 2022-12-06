@@ -2,6 +2,7 @@
 #include "types.h"
 #include "file.h"
 
+int open_file_count=0;
 fcb* current_dir;
 user_open open_file_list[MAX_OPEN_FILE];
 int current_dir_fd;  //当前打开文件的文件描述符

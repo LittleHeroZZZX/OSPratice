@@ -43,16 +43,16 @@
 #define ERR_NOT_ENOUGH_SPACE (-1)
 #define ERR_PARAM_INVALID (-2)
 #define ERR_NOT_ENOUGH_INODE (-3)
-
+#define ERR_DUPLICATE_NAME (-4)
 
 /**
- * 文件读写权限与模式
+ * 文件写模式
  * 由低位到高位分别为：读、写、写模式
  * 写模式：0表示覆盖写，1表示追加写
  */
-#define READ 0b001
-#define WRITE 0b010
-#define APPEND 0b100
+#define OVERRIDE 0b001
+#define APPEND 0b010
+#define TRUNCATE 0b100
 
 
 typedef struct free_block_list
@@ -117,6 +117,7 @@ extern char current_dir_name[_MAX_PATH];
 extern char cmd[13][6];
 extern int (*cmd_func[])(super_block* ,char **);
 extern user_open  open_file_list[MAX_OPEN_FILE];
+extern int open_file_count;
 extern int current_dir_fd;
 
 #endif //OSPRATICE_TYPES_H

@@ -35,11 +35,15 @@ void update_fcb(fcb *fcb, unsigned char attribute, size_t length, size_t file_cn
 
 void my_read(super_block *sb, user_open *_user_open, void *buf, size_t size);
 
-void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
+int my_write(super_block* sb,char** args);
+
+void* do_read_ch(void* stream);
+
+void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
 
 int my_cd(super_block* sb, char** args);
 
-void my_mkdir(super_block *sb,char *dirname);
+int my_mkdir(super_block *sb,char *dirname);
 
 int my_pwd();
 
