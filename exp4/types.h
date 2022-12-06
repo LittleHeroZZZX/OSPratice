@@ -103,13 +103,13 @@ typedef struct super_block
 
 typedef struct user_open
 {
-	fcb* f_fcb;
-	size_t f_block_start;
-	char path[256];
-	size_t p_WR; // offset of point in read and write
-	int mode;
-	unsigned char pcb_modified;
-	unsigned char is_empty;
+	fcb* f_fcb;			// FCB指针
+	size_t f_block_start;	// 文件的第一个物理块起始地址
+	char path[256];	// 文件的完整绝对路径
+	size_t p_WR; // 读写指针，指向硬盘中的地址
+	int mode;	// 文件读写权限
+	unsigned char fcb_modified;	// 文件FCB修改判定位
+	unsigned char is_empty;	// 文件非空判断位
 } user_open;
 
 extern fcb* current_dir;
