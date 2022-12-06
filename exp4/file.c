@@ -145,7 +145,7 @@ int my_open(super_block* sb, char** args)
 	}
 
 	//如果当前文件已经被打开
-	if ( is_file_open(filePath) != -1)
+	if (is_file_open(filePath) != -1)
 	{
 		fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", filePath);
 		return 1;
@@ -247,20 +247,20 @@ int my_cd(super_block* sb, char** args)
 		return 1;
 	}
 
-	char *old_current_dir_name = malloc(sizeof (char*)*FILENAME_LEN);
-	strcpy(old_current_dir_name,current_dir_name);
+	char* old_current_dir_name = malloc(sizeof(char*) * FILENAME_LEN);
+	strcpy(old_current_dir_name, current_dir_name);
 
 	// 文件未打开，需要先打开这个文件然后再cd过去
-	if ((fd = do_open(sb, filePath)) > 0)
-	{
-		current_dir_fd = fd;
-		current_dir = fcb;
-		getFullPath(current_dir_name, filePath);
-	}
-	
+	fd = is_file_open(filePath);
+	current_dir_fd = fd == -1 ? do_open(sb, filePath) : fd;
+	current_dir = fcb;
+	getFullPath(current_dir_name, filePath);
+
 	//关闭旧的目录文件
 	do_close(old_current_dir_name);
+
 	free(old_current_dir_name);
+
 	return 1;
 }
 
@@ -274,19 +274,20 @@ int my_mkdir(super_block* sb, char** args)
 
 	fcb* dirFcb = current_dir;
 	inode* p_inode = (inode*)do_read(sb, dirFcb, 0);
-	char **p =args;
-	for (p++;*p!=NULL; p++){
-		 for (int i = 0; i < dirFcb->file_count; ++i)
-		 {
-			 fcb* _fcb = index_to_fcb(sb, p_inode[i].inode_index);
-			 if (!strcmp(_fcb->filename, *p))
-			 {
-				 printf("There is duplicate name file in current dir.");
-				 return 1;
-			 }
-		 }
-		 create_dir(sb, current_dir, *p);
-	 }
+	char** p = args;
+	for (p++; *p != NULL; p++)
+	{
+		for (int i = 0; i < dirFcb->file_count; ++i)
+		{
+			fcb* _fcb = index_to_fcb(sb, p_inode[i].inode_index);
+			if (!strcmp(_fcb->filename, *p))
+			{
+				printf("There is duplicate name file in current dir.");
+				return 1;
+			}
+		}
+		create_dir(sb, current_dir, *p);
+	}
 	return 1;
 }
 
@@ -510,7 +511,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		break;
 	case TRUNCATE:
 		_user_open->p_WR = 0;
-		free_block(sb, _user_open->f_block_start, old_block_cnt);
+		free_block(sb, addr_to_index(sb,(void*)_user_open->f_block_start), old_block_cnt);
 		new_block_size = size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		for (size_t i = 0; i < new_block_cnt; i++)
@@ -863,12 +864,17 @@ int do_close(char* filePath)
 	if (index != -1)
 	{
 		//	当前工作路径无法close
-		if(!strcmp(open_file_list[index]->path,current_dir_name)){
-			fprintf(stderr, "\"close\" error: cannot close %s: The current working path cannot be closed, please exit the directory first\n", filePath);
+		if (!strcmp(open_file_list[index]->path, current_dir_name))
+		{
+			fprintf(stderr,
+				"\"close\" error: cannot close %s: The current working path cannot be closed, please exit the directory first\n",
+				filePath);
 			return -1;
-		}else{
+		}
+		else
+		{
 			free(open_file_list[index]);
-			open_file_list[index]=NULL;
+			open_file_list[index] = NULL;
 			return 0;
 		}
 
@@ -882,8 +888,9 @@ int do_close(char* filePath)
 
 int my_close(super_block* sb, char** args)
 {
-	char **p =args;
-	for (p++; *p!=NULL; p++){
+	char** p = args;
+	for (p++; *p != NULL; p++)
+	{
 		do_close(*p);
 	}
 	return 1;
