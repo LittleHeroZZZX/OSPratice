@@ -857,8 +857,14 @@ int do_close(char* filePath)
 	int index = is_file_open(filePath);
 	if (index != -1)
 	{
-		free(open_file_list[index]);
-		return 0;
+		//当前工作路径无法close
+		if(!strcmp(open_file_list[index]->path,current_dir_name)){
+			fprintf(stderr, "\"close\" error: cannot close %s: The current working path cannot be closed, please exit the directory first\n", filePath);
+		}else{
+			free(open_file_list[index]);
+			return 0;
+		}
+
 	}
 	else
 	{
