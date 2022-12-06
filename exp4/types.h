@@ -114,7 +114,7 @@ typedef struct user_open
 
 extern fcb* current_dir;
 extern char current_dir_name[_MAX_PATH];
-extern char cmd[12][6];
+extern char cmd[13][6];
 extern int (*cmd_func[])(super_block* ,char **);
 extern user_open  open_file_list[MAX_OPEN_FILE];
 extern int current_dir_fd;

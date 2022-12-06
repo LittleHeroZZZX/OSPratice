@@ -7,7 +7,7 @@ user_open  open_file_list[MAX_OPEN_FILE];
 int current_dir_fd;
 char current_dir_name[_MAX_PATH] = "/";
 
-char cmd[12][6] = {
+char cmd[13][6] = {
         "cd",
         "mkdir",
         "rmdir",
