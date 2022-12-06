@@ -277,12 +277,12 @@ int my_cd(super_block* sb, char** args)
 	return 1;
 }
 
-void my_mkdir(super_block* sb, char* dirname)
+int my_mkdir(super_block* sb, char* dirname)
 {
 	if (dirname == NULL)
 	{
 		printf("Dir name is not set.");
-		return;
+		return 1;
 	}
 
 	fcb* dirFcb = current_dir;
@@ -293,11 +293,11 @@ void my_mkdir(super_block* sb, char* dirname)
 		if (!strcmp(_fcb->filename, dirname))
 		{
 			printf("There is duplicate name file in current dir.");
-			return;
+			return 1;
 		}
 	}
 	create_dir(sb, current_dir, dirname);
-	return;
+	return 1;
 }
 
 int my_pwd()
