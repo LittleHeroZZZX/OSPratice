@@ -143,20 +143,11 @@ int my_open(super_block* sb, char** args)
 		fprintf(stderr, "\"open error\": missing path argument\n", args[1]);
 		return 1;
 	}
-	if (args[1] != NULL)
-	{
-		mode = args[2];
-	}
-	else
-	{
-		fprintf(stderr, "\"open error\": missing mode argument\n", args[1]);
-		return 1;
-	}
 
 	//如果当前文件已经被打开
-	if (is_file_open(filePath) != -1)
+	if ( is_file_open(filePath) != -1)
 	{
-		fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
+		fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", filePath);
 		return 1;
 	}
 
@@ -279,20 +270,18 @@ int my_mkdir(super_block* sb, char** args)
 
 	fcb* dirFcb = current_dir;
 	inode* p_inode = (inode*)do_read(sb, dirFcb, 0);
-	 for (char **ptr =args; *ptr!=NULL; ptr++){
+	 for (char **p =args; *p!=NULL; p++){
 		 for (int i = 0; i < dirFcb->file_count; ++i)
 		 {
 			 fcb* _fcb = index_to_fcb(sb, p_inode[i].inode_index);
-			 if (!strcmp(_fcb->filename, *ptr))
+			 if (!strcmp(_fcb->filename, *p))
 			 {
 				 printf("There is duplicate name file in current dir.");
 				 return 1;
 			 }
 		 }
+		 create_dir(sb, current_dir, *p);
 	 }
-
-
-	create_dir(sb, current_dir, dirname);
 	return 1;
 }
 
