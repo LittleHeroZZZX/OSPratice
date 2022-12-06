@@ -644,7 +644,6 @@ void clear_file(super_block* sb, fcb* fcb)
  */
 ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb)
 {
-//    todo
 	if (fcb->attribute != DIRECTORY)
 		return ERR_PARAM_INVALID;
 	inode* inodes = (inode*)do_read(sb, fcb, sizeof(inode));
