@@ -35,6 +35,10 @@
 #define MAX_FILE_SIZE ((LEVEL0_BLOCK_CNT+LEVEL1_BLOCK_CNT+LEVEL2_BLOCK_CNT)*BLOCK_SIZE)
 
 #define BASE_YEAR 1900
+#define MAX_OPEN_FILE 10 //最多可同时打开文件个数
+#define CSH_TOK_DELIM " "
+#define MAX_ARG_LENGTH 64
+#define MAX_CMD_LENGTH 256
 
 #define ERR_NOT_ENOUGH_SPACE (-1)
 #define ERR_PARAM_INVALID (-2)
@@ -109,7 +113,10 @@ typedef struct user_open
 } user_open;
 
 extern fcb* current_dir;
-
 extern char current_dir_name[_MAX_PATH];
+extern char cmd[12][6];
+extern int (*cmd_func[])(super_block* ,char **);
+extern user_open  open_file_list[MAX_OPEN_FILE];
+extern int current_dir_fd;
 
 #endif //OSPRATICE_TYPES_H

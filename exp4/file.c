@@ -74,8 +74,12 @@ user_open* my_open(super_block* sb, char* filePath, int mode)
  * @return
  */
 
-void* my_ls(super_block* sb, char* filePath)
+void* my_ls(super_block* sb, char** args)
 {
+    char * filePath =NULL;
+    if(args[1]!=NULL){
+        filePath = args[1];
+    }
 	if (filePath == NULL)
 	{
 		filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
@@ -98,11 +102,19 @@ void* my_ls(super_block* sb, char* filePath)
 			ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
 	}
 	printf("\n");
-	free(filePath);
 }
 
-void* my_cd(super_block* sb, char* filePath)
+void* my_cd(super_block* sb, char** args)
 {
+    char * filePath =NULL;
+    if(args[1]!=NULL){
+        filePath = args[1];
+    }
+    if (filePath == NULL)
+    {
+        filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
+        strcpy(filePath, current_dir_name);
+    }
 	fcb* fcb = findFcb(sb, filePath);
 	if (fcb != NULL)
 	{
@@ -185,7 +197,7 @@ size_t* get_blocks(super_block* sb, fcb* fcb)
  * @param size 读取的长度
  * @return
  */
-void f_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
+void my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
 {
 	if (_user_open->f_fcb->attribute == DIRECTORY)
 	{
@@ -229,7 +241,7 @@ void f_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
  * @param size 写入的长度
  * @return
  */
-void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
+void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 {
 	if (!sb | !_user_open || !buf)return;
 	if (_user_open->f_fcb->attribute == DIRECTORY)
@@ -558,4 +570,20 @@ ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb)
 	ssize_t index = inodes[0].inode_index;
 	free(inodes);
 	return index;
+}
+
+void my_rmdir(char **args){
+
+}
+void my_create(char **args){
+
+}
+void my_rm(char **args){
+
+}
+void my_exit_sys(char **args){
+
+}
+void my_close(char **args){
+
 }

@@ -5,6 +5,7 @@
  * @Software: VSCode
  */
 
+#include <sys/types.h>
 #include "myfs.h"
 // 初始化文件系统
 // 首先检查文件系统备份文件是否存在
@@ -208,41 +209,82 @@ void show_fs_info(super_block* sb)
 
 }
 
+int getLine(char *str, int lim, FILE *f) {
+    char c;
+    int i;
+    for (i = 0; i < lim - 1 && ( (c = fgetc(f)) != EOF && c != '\n'); ++i) {
+        str[i] = c;
+    }
+    // 处理输入时候的换行符
+    str[i] = '\0';
+
+    return i;
+}
+
+char **getArgs(char *cmd){
+    int bufSize = MAX_ARG_LENGTH, position = 0;
+    char **tokens = (char**)malloc(bufSize * sizeof(char*));
+    char *token;
+
+    if (!tokens) {
+        fprintf(stderr, "csh: allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    token = strtok(cmd, CSH_TOK_DELIM);
+    while (token != NULL) {
+        tokens[position] = token;
+        position++;
+
+        if (position >= bufSize) {
+            bufSize += MAX_ARG_LENGTH;
+            tokens = realloc(tokens, bufSize * sizeof(char*));
+            if (!tokens) {
+                fprintf(stderr, "csh: allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        token = strtok(NULL, CSH_TOK_DELIM);
+    }
+    tokens[position] = NULL; //在字符串数组末尾添加NULL，方便遍历
+    return tokens;
+}
+
+int execute(super_block* sb,char **args){
+    if (args[0] == NULL)
+        //空命令
+        return 1;
+    for (int i = 0; i < sizeof(cmd) / sizeof(*cmd); ++i) {
+        if (!strcmp(args[0],cmd[i])){
+            (*cmd_func[i])(sb,args);
+            return 1;
+        }
+    }
+}
+
+void show_csh(super_block* sb){
+    char *cmd;
+    char **args;
+    int status = 1;
+    do {
+        printf("%s >",current_dir_name);
+        getLine(cmd, MAX_CMD_LENGTH, stdin);
+        args = getArgs(cmd);
+/*        for (char **ptr =args; *ptr!=NULL; ptr++)  //遍历参数
+            printf("arg :%s\n",*ptr);*/
+        status = execute(sb,args);
+    }while (status);
+}
+
 int main()
 {
-
     super_block* sb;
     start_sys("disk", &sb, 1);
     save("disc.bak", *sb, SIZE);
     create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
     printf("/(dir)\n");
     show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-
-//    printf("full path:%s\n", current_dir_name);
-//    my_ls(sb,NULL);
-//
-//    my_cd(sb, "/users/");
-//    printf("full path:%s\n", current_dir_name);
-//    my_ls(sb,NULL);
-//
-//    my_cd(sb, "./guest");
-//    printf("full path:%s\n", current_dir_name);
-//    my_ls(sb,NULL);
-//
-//    my_cd(sb, "../groups");
-//    printf("full path:%s\n", current_dir_name);
-//    my_ls(sb,NULL);
-
+    show_csh(sb);
     return 0;
-
-	show_fs_info(sb);
-
-    char *buf = malloc(MAX_FILE_SIZE);
-    memset(buf, (int)'a', MAX_FILE_SIZE);
-    size_t index= create_file(sb, index_to_fcb(sb, sb->root_index), "test.txt", MAX_FILE_SIZE, buf);
-    my_cat(sb, index_to_fcb(sb, index));
-
-	return 0;
-
 }
 

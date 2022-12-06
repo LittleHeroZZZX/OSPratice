@@ -19,7 +19,7 @@ ssize_t apply_inode(super_block *fcb);
 
 user_open *my_open(super_block *sb, char *filePath, int mode);
 
-void *my_ls(super_block *sb, char *filePath);
+void *my_ls(super_block *sb, char** args);
 
 void *do_read(super_block *sb, fcb *fcb, size_t size);
 
@@ -31,11 +31,11 @@ void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt);
 
 void update_fcb(fcb *fcb, unsigned char attribute, size_t length, size_t file_cnt, unsigned char create);
 
-void f_read(super_block *sb, user_open *_user_open, void *buf, size_t size);
+void my_read(super_block *sb, user_open *_user_open, void *buf, size_t size);
 
-void f_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
+void my_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
 
-void *my_cd(super_block *sb, char *filePath);
+void* my_cd(super_block* sb, char** args);
 
 void my_mkdir(super_block *sb,char *dirname);
 
@@ -50,5 +50,12 @@ void my_cat(super_block *sb, fcb *fcb);
 ssize_t delete_file(super_block *sb, fcb *fcb, struct FCB* dir);
 
 void clear_file(super_block *sb, fcb *fcb);
+
+void my_rmdir(char **args);
+void my_create(char **args);
+void my_rm(char **args);
+void my_exit_sys(char **args);
+void my_close(char **args);
+
 
 
