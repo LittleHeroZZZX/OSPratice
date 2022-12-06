@@ -6,7 +6,7 @@ fcb* current_dir;
 user_open  open_file_list[MAX_OPEN_FILE];
 int current_dir_fd;
 char current_dir_name[_MAX_PATH] = "/";
-//维护一个所以命令的数组
+//维护一个所有命令的数组
 char cmd[13][6] = {
         "cd",
         "mkdir",
