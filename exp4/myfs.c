@@ -43,7 +43,7 @@ void recover(super_block** sb, char* bak_file)
 // 也就是将超级块置于文件系统的起始位置
 void start_sys(char* bak_file, super_block** sb, int recreate)
 {
-    current_dir = malloc(sizeof(fcb));
+	current_dir = malloc(sizeof(fcb));
 	FILE* fp;
 	fopen_s(&fp, bak_file, "rb");
 	if (recreate)
@@ -123,7 +123,14 @@ void my_format(super_block** p_sb)
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "groups");
 
 	// 初始化当前目录
-	memcpy(current_dir, index_to_fcb(sb,sb->root_index), sizeof(fcb));
+	memcpy(current_dir, index_to_fcb(sb, sb->root_index), sizeof(fcb));
+
+	// 初始化文件打开表
+	open_file_list[0] = malloc(sizeof(user_open));
+	memcpy(open_file_list[0]->f_fcb,current_dir,sizeof(fcb));
+	open_file_list[0]->f_block_start = index_to_addr(sb, sb->root_index);
+	open_file_list[0]->p_WR = 0;
+	strcpy(open_file_list[0]->path, "/");
 }
 
 void save(char* bak_file, super_block sb, size_t size)
@@ -278,6 +285,17 @@ void show_csh(super_block* sb){
  * for (char **ptr =args; *ptr!=NULL; ptr++)
             printf("arg :%s\n",*ptr);*/
 
+/* 可以cd到一个文件的情况
+ * if(open_file_list[current_dir_fd].f_fcb->attribute == ORDINARY_FILE){
+            // 如果当前在文件中，read,write,close除外的其他命令不能使用。
+            if(!strcmp(args[1],"write")||!strcmp(args[1],"read")||!strcmp(args[1],"close")){
+                status = execute(sb,args);
+            } else{
+                fprintf(stderr, "\"%s error\": Now in the file, the command cannot be used!\n",args[1]);
+            }
+        }else{
+            status = execute(sb,args);
+        }*/
     }while (status);
 }
 
