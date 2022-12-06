@@ -43,7 +43,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
 
 int my_cd(super_block* sb, char** args);
 
-int my_mkdir(super_block *sb,char *dirname);
+int my_mkdir(super_block *sb,char **args);
 
 int my_pwd();
 

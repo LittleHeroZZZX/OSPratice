@@ -269,9 +269,9 @@ int my_cd(super_block* sb, char** args)
 	return 1;
 }
 
-int my_mkdir(super_block* sb, char* dirname)
+int my_mkdir(super_block* sb, char** args)
 {
-	if (dirname == NULL)
+	if (args[1] == NULL)
 	{
 		printf("Dir name is not set.");
 		return 1;
@@ -279,15 +279,19 @@ int my_mkdir(super_block* sb, char* dirname)
 
 	fcb* dirFcb = current_dir;
 	inode* p_inode = (inode*)do_read(sb, dirFcb, 0);
-	for (int i = 0; i < dirFcb->file_count; ++i)
-	{
-		fcb* _fcb = index_to_fcb(sb, p_inode[i].inode_index);
-		if (!strcmp(_fcb->filename, dirname))
-		{
-			printf("There is duplicate name file in current dir.");
-			return 1;
-		}
-	}
+	 for (char **ptr =args; *ptr!=NULL; ptr++){
+		 for (int i = 0; i < dirFcb->file_count; ++i)
+		 {
+			 fcb* _fcb = index_to_fcb(sb, p_inode[i].inode_index);
+			 if (!strcmp(_fcb->filename, *ptr))
+			 {
+				 printf("There is duplicate name file in current dir.");
+				 return 1;
+			 }
+		 }
+	 }
+
+
 	create_dir(sb, current_dir, dirname);
 	return 1;
 }
@@ -876,15 +880,8 @@ int do_close(char* filePath)
 
 int my_close(super_block* sb, char** args)
 {
-	const int MAX_PARAMS_LEN = 3;
-
-	for (int i = 1; i < MAX_PARAMS_LEN; i++)
-	{
-		if (args[i] == NULL)
-		{
-			break;
-		}
-		do_close(args[i]);
+	for (char **p =args; *p!=NULL; p++){
+		do_close(*p);
 	}
 	return 1;
 }
