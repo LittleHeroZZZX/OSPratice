@@ -19,7 +19,7 @@ ssize_t apply_inode(super_block *fcb);
 
 int my_open(super_block* sb, char **args);
 
-int do_open(super_block* sb, char* filePath,char *mode);
+int do_open(super_block* sb, char* filePath);
 
 int my_ls(super_block *sb, char** args);
 
@@ -33,7 +33,7 @@ void save_blocks(super_block *sb, fcb *fcb, size_t *blocks, size_t block_cnt);
 
 void update_fcb(fcb *fcb, unsigned char attribute, size_t length, size_t file_cnt, unsigned char create);
 
-void my_read(super_block *sb, user_open *_user_open, void *buf, size_t size);
+int my_read(super_block *sb, user_open *_user_open, void *buf, size_t size);
 
 int my_write(super_block* sb,char** args);
 

@@ -44,6 +44,7 @@
 #define ERR_PARAM_INVALID (-2)
 #define ERR_NOT_ENOUGH_INODE (-3)
 #define ERR_DUPLICATE_NAME (-4)
+#define ERR_FILE_NOT_OPENED (-5)
 
 /**
  * 文件写模式
@@ -109,14 +110,13 @@ typedef struct user_open
 	size_t p_WR; // 读写指针，指向硬盘中的地址
 	int mode;	// 文件读写权限
 	unsigned char fcb_modified;	// 文件FCB修改判定位
-	unsigned char is_empty;	// 文件非空判断位
 } user_open;
 
 extern fcb* current_dir;
 extern char current_dir_name[_MAX_PATH];
 extern char cmd[13][6];
 extern int (*cmd_func[])(super_block* ,char **);
-extern user_open  open_file_list[MAX_OPEN_FILE];
+extern user_open*  open_file_list[MAX_OPEN_FILE];
 extern int open_file_count;
 extern int current_dir_fd;
 

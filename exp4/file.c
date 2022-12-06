@@ -48,54 +48,37 @@ ssize_t do_create_file(super_block* sb, fcb* dir, char* filename, unsigned char 
 }
 /**
  * 从open_file_list获取一个未被使用的user_open
- * @return 找到返回对应的下标，满了返回-1
+ * @return 找到返回对应的下标，满了返回ERR_FILE_NOT_OPENED
  */
 int get_user_open()
 {
 	int i;
 	for (i = 0; i < MAX_OPEN_FILE; i++)
 	{
-		if (open_file_list[i].is_empty)
+		if (!open_file_list[i])
 		{
+			open_file_list[i]= malloc(sizeof(user_open));
 			return i;
 		}
 	}
-	return -1;
+	return ERR_FILE_NOT_OPENED;
 }
 /**
  * 根据文件路径和打开模式打开文件，加入open_file_list中
  * @param sb
  * @param filePath
- * @param mode 文件打开模式，传入NULL默认为“r”
  * @return open_file_list 的下标
  */
-int do_open(super_block* sb, char* filePath, char* mode)
+int do_open(super_block* sb, char* filePath)
 {
 	int fd = get_user_open();
-	if (fd == -1)
+	if (fd == ERR_FILE_NOT_OPENED)
 	{
 		fprintf(stderr, "\"open error\": The number of file openings is maximum\n");
 		return -1;
 	}
-	open_file_list[fd].f_fcb = findFcb(sb, filePath);
-	open_file_list[fd].is_empty = 0;
-	if (strcmp(mode, "r"))
-	{
-		open_file_list[fd].mode = READ;
-	}
-	else if (!strcmp(mode, "w"))
-	{
-		open_file_list[fd].mode = WRITE;
-	}
-	else if (strcmp(mode, "a"))
-	{
-		open_file_list[fd].mode = WRITE;
-	}
-	else
-	{
-		fprintf(stderr, "\"open error\": The %s mode could not be found\n", mode);
-		return -1;
-	}
+	open_file_list[fd]->f_fcb = findFcb(sb, filePath);
+	getFullPath(open_file_list[fd]->path, filePath);
 	return fd;
 }
 
@@ -123,22 +106,22 @@ int my_open(super_block* sb, char** args)
 			printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
 			for (int i = 0; i < MAX_OPEN_FILE; i++)
 			{
-				if (!open_file_list[i].is_empty)
+				if (open_file_list[i])
 				{
 					printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n",
-						open_file_list[i].f_fcb->filename,
-						open_file_list[i].f_fcb->length,
-						open_file_list[i].f_fcb->attribute == 1 ? "directory" : "file",
-						open_file_list[i].f_fcb->create_time.tm_year + BASE_YEAR,
-						open_file_list[i].f_fcb->create_time.tm_mon,
-						open_file_list[i].f_fcb->create_time.tm_mday,
-						open_file_list[i].f_fcb->create_time.tm_hour,
-						open_file_list[i].f_fcb->create_time.tm_min,
-						open_file_list[i].f_fcb->last_modify_time.tm_year + BASE_YEAR,
-						open_file_list[i].f_fcb->last_modify_time.tm_mon,
-						open_file_list[i].f_fcb->last_modify_time.tm_mday,
-						open_file_list[i].f_fcb->last_modify_time.tm_hour,
-						open_file_list[i].f_fcb->last_modify_time.tm_min);
+						open_file_list[i]->f_fcb->filename,
+						open_file_list[i]->f_fcb->length,
+						open_file_list[i]->f_fcb->attribute == 1 ? "directory" : "file",
+						open_file_list[i]->f_fcb->create_time.tm_year + BASE_YEAR,
+						open_file_list[i]->f_fcb->create_time.tm_mon,
+						open_file_list[i]->f_fcb->create_time.tm_mday,
+						open_file_list[i]->f_fcb->create_time.tm_hour,
+						open_file_list[i]->f_fcb->create_time.tm_min,
+						open_file_list[i]->f_fcb->last_modify_time.tm_year + BASE_YEAR,
+						open_file_list[i]->f_fcb->last_modify_time.tm_mon,
+						open_file_list[i]->f_fcb->last_modify_time.tm_mday,
+						open_file_list[i]->f_fcb->last_modify_time.tm_hour,
+						open_file_list[i]->f_fcb->last_modify_time.tm_min);
 				}
 			}
 			return 1;
@@ -151,7 +134,6 @@ int my_open(super_block* sb, char** args)
 	}
 
 	char* filePath = NULL;
-	char* mode = NULL;
 	if (args[1] != NULL)
 	{
 		filePath = args[1];
@@ -175,9 +157,9 @@ int my_open(super_block* sb, char** args)
 	fcb* fcb = findFcb(sb, filePath);
 	for (int i = 0; i < MAX_OPEN_FILE; i++)
 	{
-		if (open_file_list[i].is_empty == 0)
+		if (open_file_list[i])
 		{
-			if (fcb == open_file_list[i].f_fcb)
+			if (fcb == open_file_list[i]->f_fcb)
 			{
 				fprintf(stderr, "\"open error\": cannot open %s: File or folder is open\n", args[i]);
 				return 1;
@@ -186,7 +168,7 @@ int my_open(super_block* sb, char** args)
 	}
 
 	//可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
-	do_open(sb, filePath, mode);
+	do_open(sb, filePath);
 
 	return 1;
 }
@@ -268,7 +250,7 @@ int my_cd(super_block* sb, char** args)
 	do_close(sb, current_dir_name);
 
 	// 文件未打开，需要先打开这个文件然后再cd过去
-	if ((fd = do_open(sb, filePath, "rw")) > 0)
+	if ((fd = do_open(sb, filePath)) > 0)
 	{
 		current_dir_fd = fd;
 		current_dir = fcb;
@@ -346,24 +328,19 @@ size_t* get_blocks(super_block* sb, fcb* fcb)
  * @param _user_open 待读取文件的user_open
  * @param buf 读取到的文件内容
  * @param size 读取的长度
- * @return
+ * @return 1
  */
-void my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
+int my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
 {
 	if (_user_open->f_fcb->attribute == DIRECTORY)
 	{
 		printf("File to read is not a file!\n");
-		return;
-	}
-	if (!(_user_open->mode & READ))
-	{
-		printf("File to read is not readable!\n");
-		return;
+		return 1;
 	}
 	if (!buf)
 	{
-		printf("Buffer is null!\n");
-		return;
+		printf("Buffer is NULL!\n");
+		return 1;
 	}
 
 	fcb* fcb = _user_open->f_fcb;
@@ -372,7 +349,7 @@ void my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
 	size_t* blocks = get_blocks(sb, fcb);
 	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-	_user_open->p_WR = blocks[0];
+	_user_open->p_WR = 0;
 	for (size_t i = 0; i < block_cnt; i++)
 	{
 		memcpy(buf + i * BLOCK_SIZE, index_to_addr(sb, blocks[i]), rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size);
@@ -381,7 +358,7 @@ void my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
 	}
 	free(blocks);
 	_user_open->p_WR = offset;
-	return;
+	return 1;
 }
 
 int my_write(super_block* sb, char** args)
@@ -425,9 +402,9 @@ int my_write(super_block* sb, char** args)
 	// 从文件打开列表定位待写入文件
 	for (int i = 0; i < open_file_count; i++)
 	{
-		if (!strcmp(open_file_list[i].f_fcb->filename, args[1]))
+		if (!strcmp(open_file_list[i]->f_fcb->filename, args[1]))
 		{
-			if (open_file_list[i].f_fcb->attribute == DIRECTORY)
+			if (open_file_list[i]->f_fcb->attribute == DIRECTORY)
 			{
 				printf("File trying to write is not a directory!\n");
 				return 1;
@@ -878,9 +855,9 @@ int do_close(super_block* sb, char* filePath)
 
 	for (int i = 0; i < MAX_OPEN_FILE; i++)
 	{
-		if (open_file_list[i].is_empty == 0)
+		if (open_file_list[i])
 		{
-			if (fcb == open_file_list[i].f_fcb)
+			if (fcb == open_file_list[i]->f_fcb)
 			{
 				/*
 				 * 复原对应open_file_list项

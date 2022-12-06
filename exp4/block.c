@@ -102,6 +102,7 @@ static char* left(char *dest,const char *src ,int n){
     *(p++)='\0';
     return dest;
 }
+
 void getFullPath(char* DestFullPath, char* filePath)
 {
    if(filePath[0]=='/'){

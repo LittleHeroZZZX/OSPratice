@@ -122,6 +122,7 @@ void my_format(super_block** p_sb)
 	create_dir(sb, index_to_fcb(sb, users_inode), "guest");
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "groups");
 
+	// 初始化当前目录
 	memcpy(current_dir, index_to_fcb(sb,sb->root_index), sizeof(fcb));
 }
 
