@@ -247,7 +247,7 @@ int my_cd(super_block* sb, char** args)
 		return 1;
 	}
 
-	char *old_current_dir_name = malloc(sizeof (char*)*_MAX_PATH);
+	char *old_current_dir_name = malloc(sizeof (char*)*FILENAME_LEN);
 	strcpy(old_current_dir_name,current_dir_name);
 
 	// 文件未打开，需要先打开这个文件然后再cd过去
@@ -260,6 +260,7 @@ int my_cd(super_block* sb, char** args)
 	
 	//关闭旧的目录文件
 	do_close(old_current_dir_name);
+	free(old_current_dir_name);
 	return 1;
 }
 
@@ -860,12 +861,13 @@ int do_close(char* filePath)
 	int index = is_file_open(filePath);
 	if (index != -1)
 	{
-		//当前工作路径无法close
+		//	当前工作路径无法close
 		if(!strcmp(open_file_list[index]->path,current_dir_name)){
 			fprintf(stderr, "\"close\" error: cannot close %s: The current working path cannot be closed, please exit the directory first\n", filePath);
 			return -1;
 		}else{
 			free(open_file_list[index]);
+			open_file_list[index]=NULL;
 			return 0;
 		}
 
@@ -879,7 +881,8 @@ int do_close(char* filePath)
 
 int my_close(super_block* sb, char** args)
 {
-	for (char **p =args; *p!=NULL; p++){
+	char **p =args;
+	for (p++; *p!=NULL; p++){
 		do_close(*p);
 	}
 	return 1;
