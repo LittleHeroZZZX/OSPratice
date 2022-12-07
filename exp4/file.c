@@ -1099,3 +1099,12 @@ void do_printf(fcb* ptr,int format){
 		break;
 	}
 }
+
+int my_clear(super_block* sb, char** args){
+	//在CLion中无法清空，在系统的cmd中才可以
+	if(args[1]!=NULL){
+		printf("clear: Too many parameters \n");
+	}
+	system("clear");
+	return 1;
+}

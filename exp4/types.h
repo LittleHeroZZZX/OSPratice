@@ -122,7 +122,7 @@ extern fcb* current_dir;
 
 extern char current_dir_name[_MAX_PATH];
 
-extern char cmd[14][6];
+extern char cmd[15][6];
 
 extern int (* cmd_func[])(super_block*, char**);
 

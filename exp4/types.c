@@ -14,7 +14,7 @@ int current_dir_fd;  //当前打开文件的文件描述符
 char current_dir_name[_MAX_PATH] = "/";
 
 //维护一个所有命令的数组
-char cmd[14][6] = {
+char cmd[15][6] = {
 	"cd",
 	"mkdir",
 	"rmdir",
@@ -28,7 +28,8 @@ char cmd[14][6] = {
 	"open",
 	"close",
 	"pwd",
-	"touch"
+	"touch",
+	"clear"
 };
 
 //维护一个函数地址指针的数组
@@ -46,5 +47,6 @@ int (* cmd_func[])(super_block* sb, char**) = {
 	&my_open,
 	&my_close,
 	&my_pwd,
-	&my_touch
+	&my_touch,
+	&my_clear
 };

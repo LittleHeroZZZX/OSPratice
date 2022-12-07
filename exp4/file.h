@@ -68,4 +68,5 @@ int my_exit_sys(super_block* sb, char** args);
 int my_close(super_block* sb, char** args);
 int do_close(super_block* sb, char* filePath);
 int my_touch(super_block* sb, char** args);
+int my_clear(super_block* sb, char** args);
 
