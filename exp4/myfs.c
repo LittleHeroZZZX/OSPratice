@@ -129,11 +129,11 @@ void my_format(super_block** p_sb)
 	do_open(sb, current_dir_name);
 }
 
-void save(char* bak_file, super_block sb, size_t size)
+void save(char* bak_file, super_block *sb, size_t size)
 {
 	FILE* fp;
 	size_t ret;
-	void* start_pos = sb.start_pos;
+	void* start_pos = sb->start_pos;
 	fopen_s(&fp, bak_file, "wb+");
 	if (fp == NULL)
 	{
@@ -147,7 +147,7 @@ void save(char* bak_file, super_block sb, size_t size)
 		exit(1);
 	}
 //  保存索引节点数组
-	ret = fwrite(sb.fcb_array, 1, sizeof(fcb) * INODE_MAX_COUNT, fp);
+	ret = fwrite(sb->fcb_array, 1, sizeof(fcb) * INODE_MAX_COUNT, fp);
 	if (ret != sizeof(fcb) * INODE_MAX_COUNT)
 	{
 		printf("write error\n");
@@ -298,8 +298,7 @@ void show_csh(super_block* sb)
 
 int main()
 {
-	start_sys("disk", &sb, 1);
-	save("disc.bak", *sb, SIZE);
+	start_sys(DISK_BACKUP_FILENAME, &sb, 0);
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
 	printf("/(dir)\n");
 	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);

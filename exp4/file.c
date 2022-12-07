@@ -302,7 +302,6 @@ int my_cd(super_block* sb, char** args)
 			}
 
 			getFullPath(filePath, filePath);
-
 			//cd 到当前目录
 			if (!strcmp(filePath, current_dir_name))
 			{
@@ -334,7 +333,6 @@ int my_cd(super_block* sb, char** args)
 
 			//关闭旧的目录文件
 			do_close(sb, old_current_dir_name);
-
 			free(old_current_dir_name);
 
 			return 1;
@@ -877,7 +875,6 @@ ssize_t create_file(super_block* sb, fcb* dir, char* filename, size_t size, void
  */
 ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 {
-//    todo
 	if (fcb->attribute == DIRECTORY)
 	{
 		if (strcpy(fcb->filename, "/") == 0)
@@ -893,41 +890,58 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 		else
 		{
 			// 释放文件blocks,把fcb的is_used置为0（在索引节点表中删除），在dir的文件内容中删除该文件的inode
-			size_t* blocks = get_blocks(sb, fcb);
-			size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-			for (size_t i = 0; i < block_cnt; i++)
-			{
-				free_block(sb, blocks[i], 1);
-			}
-			free(blocks);
-			fcb->is_used = 0;
-//            todo clear file
-
-
+            size_t *blocks = get_blocks(sb, fcb);
+            size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+            for (size_t i = 0; i < block_cnt; i++) {
+                free_block(sb, blocks[i], 1);
+            }
+            free(blocks);
+            fcb->is_used = 0;
+            inode *inodes = (inode*)do_read(sb, dir, 0);
+//          从目录文件内删除这一项
+            for (size_t i = 0; i < dir->file_count; i++) {
+                if (strcpy(inodes[i].filename, fcb->filename) == 0) {
+                    for (size_t j = i; j < dir->file_count - 1; j++) {
+                        memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
+                    }
+                    break;
+                }
+            }
+            dir->file_count--;
+            clear_file(sb, dir);
+            do_write(sb, dir, (char*)inodes, dir->file_count * sizeof(inode));
+            free(inodes);
+            return 0;
 		}
 	}
 }
 
 /**
- * 清除文件内容
+ * 清除文件内容，目录文件不会清除..和.目录项
  * @param sb
  * @param fcb
  */
 void clear_file(super_block* sb, fcb* fcb)
 {
-	size_t* blocks = get_blocks(sb, fcb);
-	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-
-	for (size_t i = 0; i < block_cnt; i++)
-	{
-		free_block(sb, blocks[i], 1);
-	}
-	free(blocks);
-	if (fcb->attribute == ORDINARY_FILE)
-		update_fcb(fcb, fcb->attribute, 0, 0, 0);
-	else
-		update_fcb(fcb, fcb->attribute, 0, 2, 0);
-
+    size_t* blocks = get_blocks(sb, fcb);
+    size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    inode *inodes;
+    if (fcb->attribute == DIRECTORY)
+    {
+        inodes = (inode*)do_read(sb, fcb, sizeof(inode) * 2);
+    }
+    for (size_t i = 0; i < block_cnt; i++)
+    {
+        free_block(sb, blocks[i], 1);
+    }
+    free(blocks);
+    if (fcb->attribute == ORDINARY_FILE)
+        update_fcb(fcb, fcb->attribute, 0, 0, 0);
+    else {
+        update_fcb(fcb, fcb->attribute, 0, 2, 0);
+        do_write(sb, fcb, (char*)inodes, sizeof(inode) * 2);
+        free(inodes);
+    }
 }
 
 /**
@@ -963,7 +977,8 @@ int my_rm(super_block* sb, char** args)
 
 int my_exit_sys(super_block* sb, char** args)
 {
-	return 1;
+    save(DISK_BACKUP_FILENAME, sb, SIZE);
+    exit(0);
 }
 
 int do_close(super_block* sb, char* filePath)

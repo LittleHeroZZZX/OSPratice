@@ -14,6 +14,7 @@
 
 #define BLOCK_SIZE 1024
 #define SIZE (512*1024*1024)
+#define DISK_BACKUP_FILENAME "disk.bak"
 #define FILENAME_LEN 255
 #define DIR_MAX_COUNT ((BLOCK_SIZE-sizeof(size_t))/sizeof(inode))
 #define FILE_MAX_COUNT 1024
