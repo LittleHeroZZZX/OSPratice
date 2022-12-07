@@ -204,32 +204,70 @@ int is_file_open(char* filePath)
  */
 int my_ls(super_block* sb, char** args)
 {
-	char* filePath = NULL;
-	if (args[1] != NULL)
-	{
-		filePath = args[1];
+	char **p = args;
+	for (++p;*p!=NULL;p++){
+		if (!strcmp(*p,"--help")){
+			printf("Usage: ls [OPTION]... [FILE]\n");
+			printf("Lists the file information in the current directory \n");
+			printf("OPTION:\n");
+			printf("    -l: Lists the detailed file information in the current directory\n");
+			return 1;
+		}
+		else if (!strcmp(*p,"-l"))
+		{
+			fcb* dirFcb;
+			p++;
+			if (*p==NULL){
+				dirFcb = current_dir;
+			}else{
+				dirFcb = findFcb(sb, *p);
+				if (dirFcb == NULL)
+				{
+					printf("\"ls\": cannot ls %s: No such file or folder\n", *p++);
+					return 1;
+				}
+				if (dirFcb->attribute ==ORDINARY_FILE){
+					printf("\"ls\": ls cannot be used for files\n", *p++);
+					return 1;
+				}
+			}
+			printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
+			inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
+			for (int i = 0; i < dirFcb->file_count; ++i)
+			{
+				fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
+				printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n", ptr->filename, ptr->length,
+						ptr->attribute == 1 ? "directory" : "file", ptr[i].create_time.tm_year + BASE_YEAR,
+						ptr->create_time.tm_mon, ptr->create_time.tm_mday, ptr->create_time.tm_hour, ptr->create_time.tm_min,
+						ptr[i].last_modify_time.tm_year + BASE_YEAR, ptr->last_modify_time.tm_mon, ptr->last_modify_time.tm_mday,
+						ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
+			}
+			return 1;
+		}else{
+			break;
+		}
 	}
-	if (filePath == NULL)
-	{
-		filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
-		strcpy(filePath, current_dir_name);
+	
+	fcb* dirFcb;
+	if (*p==NULL){
+		dirFcb = current_dir;
+	}else{
+		dirFcb = findFcb(sb, *p);
+		if (dirFcb == NULL)
+		{
+			printf("\"ls\": cannot ls %s: No such file or folder\n", *p++);
+			return 1;
+		}
+		if (dirFcb->attribute ==ORDINARY_FILE){
+			printf("\"ls\": ls cannot be used for files\n", *p++);
+			return 1;
+		}
 	}
-	fcb* dirFcb = findFcb(sb, filePath);
-	if (dirFcb == NULL || dirFcb->attribute == ORDINARY_FILE)
-	{
-		printf("\"ls\": cannot open %s: No such file or folder\n", filePath);
-		return 1;
-	}
-	printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
 	inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 	for (int i = 0; i < dirFcb->file_count; ++i)
 	{
 		fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-		printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n", ptr->filename, ptr->length,
-			ptr->attribute == 1 ? "directory" : "file", ptr[i].create_time.tm_year + BASE_YEAR,
-			ptr->create_time.tm_mon, ptr->create_time.tm_mday, ptr->create_time.tm_hour, ptr->create_time.tm_min,
-			ptr[i].last_modify_time.tm_year + BASE_YEAR, ptr->last_modify_time.tm_mon, ptr->last_modify_time.tm_mday,
-			ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
+		printf("%s\t", ptr->filename);
 	}
 	printf("\n");
 	return 1;
@@ -243,53 +281,67 @@ int my_ls(super_block* sb, char** args)
  */
 int my_cd(super_block* sb, char** args)
 {
+	char **p=args;
 	int fd;
-	char* filePath = NULL;
-	if (args[1] != NULL)
-	{
-		filePath = args[1];
+	for (++p;*p!=NULL;p++){
+		if (!strcmp(*p,"--help")){
+			printf("Usage: cd [FILE]\n");
+			printf("Change the current working directory \n");
+			return 1;
+		}else if(*(++p)==NULL){
+			char* filePath = NULL;
+			if (*(--p) != NULL)
+			{
+				filePath = *p;
+			}
+			if (filePath == NULL)
+			{
+				filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
+				strcpy(filePath, current_dir_name);
+			}
+			
+			getFullPath(filePath,filePath);
+			
+			//cd 到当前目录
+			if(!strcmp(filePath,current_dir_name)){
+				return 1;
+			}
+			
+			fcb* fcb = findFcb(sb, filePath);
+			//找不到这个文件
+			if (fcb == NULL)
+			{
+				printf( "\"cd\" error: cannot open %s: No such folder\n", filePath);
+				return 1;
+			}
+			//不能cd到一个文件
+			if (fcb->attribute == ORDINARY_FILE)
+			{
+				printf("\"cd\" error: cannot open %s: It is a file!\n", filePath);
+				return 1;
+			}
+			
+			char* old_current_dir_name = malloc(sizeof(char*) * FILENAME_LEN);
+			strcpy(old_current_dir_name, current_dir_name);
+			
+			// 如果文件未打开，需要先打开这个文件然后再cd过去
+			fd = is_file_open(filePath);
+			current_dir_fd = fd == -1 ? do_open(sb, filePath) : fd;
+			current_dir = fcb;
+			getFullPath(current_dir_name, filePath);
+			
+			//关闭旧的目录文件
+			do_close(sb,old_current_dir_name);
+			
+			free(old_current_dir_name);
+			
+			return 1;
+		} else{
+			printf("\"cd\" error: Too many parameters\n");
+			return 1;
+		}
 	}
-	if (filePath == NULL)
-	{
-		filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
-		strcpy(filePath, current_dir_name);
-	}
-	
-	getFullPath(filePath,filePath);
-	
-	//cd 到当前目录
-	if(!strcmp(filePath,current_dir_name)){
-		return 1;
-	}
-	
-	fcb* fcb = findFcb(sb, filePath);
-	//找不到这个文件
-	if (fcb == NULL)
-	{
-		printf( "\"cd\" error: cannot open %s: No such folder\n", filePath);
-		return 1;
-	}
-	//不能cd到一个文件
-	if (fcb->attribute == ORDINARY_FILE)
-	{
-		printf("\"cd\" error: cannot open %s: It is a file!\n", filePath);
-		return 1;
-	}
-	
-	char* old_current_dir_name = malloc(sizeof(char*) * FILENAME_LEN);
-	strcpy(old_current_dir_name, current_dir_name);
-	
-	// 如果文件未打开，需要先打开这个文件然后再cd过去
-	fd = is_file_open(filePath);
-	current_dir_fd = fd == -1 ? do_open(sb, filePath) : fd;
-	current_dir = fcb;
-	getFullPath(current_dir_name, filePath);
-	
-	//关闭旧的目录文件
-	do_close(sb,old_current_dir_name);
-	
-	free(old_current_dir_name);
-	
+
 	
 	return 1;
 }
@@ -321,9 +373,21 @@ int my_mkdir(super_block* sb, char** args)
 	return 1;
 }
 
-int my_pwd()
+int my_pwd(super_block* sb, char **args)
 {
-	printf("%s\n", current_dir_name);
+	char **p = args;
+	p++;
+
+	if (*p==NULL){
+		printf("%s\n", current_dir_name);
+		return 1;
+	}
+	if (!strcmp(*p,"--help")){
+		printf("Usage: pwd \n");
+		printf("View the current working path \n");
+	} else {
+		printf("Unknown argument\n");
+	}
 	return 1;
 }
 

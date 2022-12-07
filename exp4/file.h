@@ -45,7 +45,7 @@ int my_cd(super_block* sb, char** args);
 
 int my_mkdir(super_block *sb,char **args);
 
-int my_pwd();
+int my_pwd(super_block* sb,char **args);
 
 int is_file_open(char* filePath);
 
