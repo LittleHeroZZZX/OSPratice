@@ -109,45 +109,40 @@ static char* left(char *dest,const char *src ,int n){
  */
 void getFullPath(char* DestFullPath, char* filePath)
 {
+	char str[_MAX_PATH];
+	char fullPath[_MAX_PATH] = "/";
+	
    if(filePath[0]=='/'){
-	   int i=0;
-	   //遇到连续多个"///////"，忽略
-	   for (i = 0; filePath[i]=='/'; ++i);
-       strcpy(DestFullPath,filePath+i-1);
-	   if (strcmp(DestFullPath,"/")&&DestFullPath[strlen(DestFullPath)-1]!='/'){
-		   strcat(DestFullPath,"/");
-	   }
+       strcpy(str,filePath);
    } else{
-       char str[_MAX_PATH];
        strcpy(str,current_dir_name);
        strcat(str,filePath);
-       char fullPath[_MAX_PATH] ="/";
-       char *token;
-       token = strtok(str,"/");
-       while (token!=NULL){
-           char fileName[_MAX_FNAME];
-           strcpy(fileName,token);
-           if(!strcmp(fileName,"..")){
-               char parentPath[_MAX_PATH];
-               left(parentPath,fullPath,strlen(fullPath)-1);
-               char* ptr = strrchr(fullPath, '/');
-               char* ptr2 = strrchr(parentPath, '/');
-               int offset;
-               if(ptr2==NULL){
-                   offset = (int) (ptr - fullPath);
-                   strcpy(fullPath,fullPath+offset);
-               } else{
-                   left(fullPath,fullPath,strlen(fullPath) - strlen(ptr2));
-               }
-           }else if(!strcmp(fileName,".")){
-           } else{
-               strcat(fileName,"/");
-               strcat(fullPath,fileName);
-           }
-           token = strtok(NULL,"/");
-       }
-       strcpy(DestFullPath,fullPath);
    }
+	char *token;
+	token = strtok(str,"/");
+	while (token!=NULL){
+		char fileName[_MAX_FNAME];
+		strcpy(fileName,token);
+		if(!strcmp(fileName,"..")){
+			char parentPath[_MAX_PATH];
+			left(parentPath,fullPath,strlen(fullPath)-1);
+			char* ptr = strrchr(fullPath, '/');
+			char* ptr2 = strrchr(parentPath, '/');
+			int offset;
+			if(ptr2==NULL){
+				offset = (int) (ptr - fullPath);
+				strcpy(fullPath,fullPath+offset);
+			} else{
+				left(fullPath,fullPath,strlen(fullPath) - strlen(ptr2));
+			}
+		}else if(!strcmp(fileName,".")){
+		} else{
+			strcat(fileName,"/");
+			strcat(fullPath,fileName);
+		}
+		token = strtok(NULL,"/");
+	}
+	strcpy(DestFullPath,fullPath);
 }
 
 
