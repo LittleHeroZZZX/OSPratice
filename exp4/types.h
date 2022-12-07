@@ -46,6 +46,9 @@
 #define ERR_DUPLICATE_NAME (-4)
 #define ERR_FILE_NOT_OPENED (-5)
 
+#define FILE_ATTRIBUTES_TITLE 0
+#define FILE_ATTRIBUTES 1
+
 /**
  * 文件写模式
  * 由低位到高位分别为：读、写、写模式
@@ -104,22 +107,28 @@ typedef struct super_block
 
 typedef struct user_open
 {
-	fcb* f_fcb;			// FCB指针
-	void* f_block_start;	// 文件的第一个物理块起始地址
-	char path[256];	// 文件的完整绝对路径
+	fcb* f_fcb;            // FCB指针
+	void* f_block_start;    // 文件的第一个物理块起始地址
+	char path[256];    // 文件的完整绝对路径
 	size_t p_WR; // 读写指针，指向硬盘中的地址
-	int mode;	// 文件写入模式
-	unsigned char fcb_modified;	// 文件FCB修改判定位
+	int mode;    // 文件写入模式
+	unsigned char fcb_modified;    // 文件FCB修改判定位
 } user_open;
 
-
 extern super_block* sb;
+
 extern fcb* current_dir;
+
 extern char current_dir_name[_MAX_PATH];
-extern char cmd[13][6];
-extern int (*cmd_func[])(super_block* ,char **);
-extern user_open*  open_file_list[MAX_OPEN_FILE];
+
+extern char cmd[14][6];
+
+extern int (* cmd_func[])(super_block*, char**);
+
+extern user_open* open_file_list[MAX_OPEN_FILE];
+
 extern int open_file_count;
+
 extern int current_dir_fd;
 
 #endif //OSPRATICE_TYPES_H

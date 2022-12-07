@@ -97,9 +97,10 @@ int my_open(super_block* sb, char** args)
 		printf("open: missing argument!\n");
 		return 1;
 	}
-	
+
 	//查看帮助文档
-	if(!strcmp(args[1],"--help")){
+	if (!strcmp(args[1], "--help"))
+	{
 		printf("Usage1: open [OPTION]...\n");
 		printf("Usage2: open [FILE]...\n");
 		printf("Open the files or list all the information of openfile \n");
@@ -113,37 +114,24 @@ int my_open(super_block* sb, char** args)
 	{
 		if (!strcmp(args[1], "-l"))
 		{
-			printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
+			do_printf(NULL,FILE_ATTRIBUTES_TITLE);
 			for (int i = 0; i < MAX_OPEN_FILE; i++)
 			{
 				if (open_file_list[i])
 				{
-					printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n",
-						open_file_list[i]->f_fcb->filename,
-						open_file_list[i]->f_fcb->length,
-						open_file_list[i]->f_fcb->attribute == 1 ? "directory" : "file",
-						open_file_list[i]->f_fcb->create_time.tm_year + BASE_YEAR,
-						open_file_list[i]->f_fcb->create_time.tm_mon,
-						open_file_list[i]->f_fcb->create_time.tm_mday,
-						open_file_list[i]->f_fcb->create_time.tm_hour,
-						open_file_list[i]->f_fcb->create_time.tm_min,
-						open_file_list[i]->f_fcb->last_modify_time.tm_year + BASE_YEAR,
-						open_file_list[i]->f_fcb->last_modify_time.tm_mon,
-						open_file_list[i]->f_fcb->last_modify_time.tm_mday,
-						open_file_list[i]->f_fcb->last_modify_time.tm_hour,
-						open_file_list[i]->f_fcb->last_modify_time.tm_min);
+					do_printf(open_file_list[i]->f_fcb,FILE_ATTRIBUTES);
 				}
 			}
 			return 1;
 		}
-		else if(strcmp(args[1],"--help"))
+		else if (strcmp(args[1], "--help"))
 		{
 			printf("\"open error\": wrong argument\n");
 			return 1;
 		}
 	}
-	
-	int cnt=1;
+
+	int cnt = 1;
 	char** p = args;
 	for (p++; *p != NULL; p++)
 	{
@@ -154,27 +142,28 @@ int my_open(super_block* sb, char** args)
 		}
 		else
 		{
-			printf( "\"open error in argument%d\": missing path argument\n", cnt);
+			printf("\"open error in argument%d\": missing path argument\n", cnt);
 			return 1;
 		}
-		
-		if(findFcb(sb,filePath)==NULL){
-			printf( "\"open error in argument%d\": cannot open %s: There is no such file or folder\n",cnt,*p);
+
+		if (findFcb(sb, filePath) == NULL)
+		{
+			printf("\"open error in argument%d\": cannot open %s: There is no such file or folder\n", cnt, *p);
 			return 1;
 		}
-		
+
 		//如果当前文件已经被打开
 		if (is_file_open(filePath) != -1)
 		{
-			printf( "\"open error in argument%d\": cannot open %s: File or folder is open\n",cnt, filePath, *p);
+			printf("\"open error in argument%d\": cannot open %s: File or folder is open\n", cnt, filePath, *p);
 			return 1;
 		}
-		
+
 		//可以打开一个目录文件，但并不会更改当前工作目录和当前文件打开文件描述符。
 		do_open(sb, filePath);
 		cnt++;
 	}
-	
+
 
 	return 1;
 }
@@ -204,61 +193,69 @@ int is_file_open(char* filePath)
  */
 int my_ls(super_block* sb, char** args)
 {
-	char **p = args;
-	for (++p;*p!=NULL;p++){
-		if (!strcmp(*p,"--help")){
+	char** p = args;
+	for (++p; *p != NULL; p++)
+	{
+		if (!strcmp(*p, "--help"))
+		{
 			printf("Usage: ls [OPTION]... [FILE]\n");
 			printf("Lists the file information in the current directory \n");
 			printf("OPTION:\n");
 			printf("    -l: Lists the detailed file information in the current directory\n");
 			return 1;
 		}
-		else if (!strcmp(*p,"-l"))
+		else if (!strcmp(*p, "-l"))
 		{
 			fcb* dirFcb;
 			p++;
-			if (*p==NULL){
+			if (*p == NULL)
+			{
 				dirFcb = current_dir;
-			}else{
+			}
+			else
+			{
 				dirFcb = findFcb(sb, *p);
 				if (dirFcb == NULL)
 				{
 					printf("\"ls\": cannot ls %s: No such file or folder\n", *p++);
 					return 1;
 				}
-				if (dirFcb->attribute ==ORDINARY_FILE){
+				if (dirFcb->attribute == ORDINARY_FILE)
+				{
 					printf("\"ls\": ls cannot be used for files\n", *p++);
 					return 1;
 				}
 			}
-			printf("filename\tlength\tattribute\tcreate time\tlast modify time\t\n");
+			do_printf(NULL,FILE_ATTRIBUTES_TITLE);
 			inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 			for (int i = 0; i < dirFcb->file_count; ++i)
 			{
 				fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-				printf("%s\t\t%d\t%s\t%d-%d-%d %d:%d\t%d-%d-%d %d:%d\t\n", ptr->filename, ptr->length,
-						ptr->attribute == 1 ? "directory" : "file", ptr[i].create_time.tm_year + BASE_YEAR,
-						ptr->create_time.tm_mon, ptr->create_time.tm_mday, ptr->create_time.tm_hour, ptr->create_time.tm_min,
-						ptr[i].last_modify_time.tm_year + BASE_YEAR, ptr->last_modify_time.tm_mon, ptr->last_modify_time.tm_mday,
-						ptr->last_modify_time.tm_hour, ptr->last_modify_time.tm_min);
+				do_printf(ptr,FILE_ATTRIBUTES);
 			}
 			return 1;
-		}else{
+		}
+		else
+		{
 			break;
 		}
 	}
-	
+
 	fcb* dirFcb;
-	if (*p==NULL){
+	if (*p == NULL)
+	{
 		dirFcb = current_dir;
-	}else{
+	}
+	else
+	{
 		dirFcb = findFcb(sb, *p);
 		if (dirFcb == NULL)
 		{
 			printf("\"ls\": cannot ls %s: No such file or folder\n", *p++);
 			return 1;
 		}
-		if (dirFcb->attribute ==ORDINARY_FILE){
+		if (dirFcb->attribute == ORDINARY_FILE)
+		{
 			printf("\"ls\": ls cannot be used for files\n", *p++);
 			return 1;
 		}
@@ -281,14 +278,18 @@ int my_ls(super_block* sb, char** args)
  */
 int my_cd(super_block* sb, char** args)
 {
-	char **p=args;
+	char** p = args;
 	int fd;
-	for (++p;*p!=NULL;p++){
-		if (!strcmp(*p,"--help")){
+	for (++p; *p != NULL; p++)
+	{
+		if (!strcmp(*p, "--help"))
+		{
 			printf("Usage: cd [FILE]\n");
 			printf("Change the current working directory \n");
 			return 1;
-		}else if(*(++p)==NULL){
+		}
+		else if (*(++p) == NULL)
+		{
 			char* filePath = NULL;
 			if (*(--p) != NULL)
 			{
@@ -299,19 +300,20 @@ int my_cd(super_block* sb, char** args)
 				filePath = (char*)malloc(sizeof(char) * _MAX_PATH);
 				strcpy(filePath, current_dir_name);
 			}
-			
-			getFullPath(filePath,filePath);
-			
+
+			getFullPath(filePath, filePath);
+
 			//cd 到当前目录
-			if(!strcmp(filePath,current_dir_name)){
+			if (!strcmp(filePath, current_dir_name))
+			{
 				return 1;
 			}
-			
+
 			fcb* fcb = findFcb(sb, filePath);
 			//找不到这个文件
 			if (fcb == NULL)
 			{
-				printf( "\"cd\" error: cannot open %s: No such folder\n", filePath);
+				printf("\"cd\" error: cannot open %s: No such folder\n", filePath);
 				return 1;
 			}
 			//不能cd到一个文件
@@ -320,29 +322,31 @@ int my_cd(super_block* sb, char** args)
 				printf("\"cd\" error: cannot open %s: It is a file!\n", filePath);
 				return 1;
 			}
-			
+
 			char* old_current_dir_name = malloc(sizeof(char*) * FILENAME_LEN);
 			strcpy(old_current_dir_name, current_dir_name);
-			
+
 			// 如果文件未打开，需要先打开这个文件然后再cd过去
 			fd = is_file_open(filePath);
 			current_dir_fd = fd == -1 ? do_open(sb, filePath) : fd;
 			current_dir = fcb;
 			getFullPath(current_dir_name, filePath);
-			
+
 			//关闭旧的目录文件
-			do_close(sb,old_current_dir_name);
-			
+			do_close(sb, old_current_dir_name);
+
 			free(old_current_dir_name);
-			
+
 			return 1;
-		} else{
+		}
+		else
+		{
 			printf("\"cd\" error: Too many parameters\n");
 			return 1;
 		}
 	}
 
-	
+
 	return 1;
 }
 
@@ -373,19 +377,23 @@ int my_mkdir(super_block* sb, char** args)
 	return 1;
 }
 
-int my_pwd(super_block* sb, char **args)
+int my_pwd(super_block* sb, char** args)
 {
-	char **p = args;
+	char** p = args;
 	p++;
 
-	if (*p==NULL){
+	if (*p == NULL)
+	{
 		printf("%s\n", current_dir_name);
 		return 1;
 	}
-	if (!strcmp(*p,"--help")){
+	if (!strcmp(*p, "--help"))
+	{
 		printf("Usage: pwd \n");
 		printf("View the current working path \n");
-	} else {
+	}
+	else
+	{
 		printf("Unknown argument\n");
 	}
 	return 1;
@@ -512,9 +520,14 @@ int my_write(super_block* sb, char** args)
 				printf("File trying to write is not a directory!\n");
 				return 1;
 			}
-			_user_open = &open_file_list[i];
+			_user_open = open_file_list[i];
 			break;
 		}
+	}
+	if (!_user_open)
+	{
+		printf("File not opened!\n");
+		return 1;
 	}
 	_user_open->mode = mode;
 	char* buf = do_read_ch(stdin);
@@ -605,7 +618,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		break;
 	case TRUNCATE:
 		_user_open->p_WR = 0;
-		free_block(sb, addr_to_index(sb,(void*)_user_open->f_block_start), old_block_cnt);
+		free_block(sb, addr_to_index(sb, (void*)_user_open->f_block_start), old_block_cnt);
 		new_block_size = size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		for (size_t i = 0; i < new_block_cnt; i++)
@@ -854,6 +867,7 @@ ssize_t create_file(super_block* sb, fcb* dir, char* filename, size_t size, void
 		do_write(sb, fcb, content, size);
 	return index;
 }
+
 /**
  * 从dir目录中删除fcb文件
  * @param sb 超级块
@@ -954,8 +968,9 @@ int my_exit_sys(super_block* sb, char** args)
 
 int do_close(super_block* sb, char* filePath)
 {
-	if(findFcb(sb,filePath)==NULL){
-		printf( "\"close error\": cannot open %s: There is no such file or folder\n", filePath);
+	if (findFcb(sb, filePath) == NULL)
+	{
+		printf("\"close error\": cannot open %s: There is no such file or folder\n", filePath);
 		return 1;
 	}
 	int index = is_file_open(filePath);
@@ -989,7 +1004,61 @@ int my_close(super_block* sb, char** args)
 	char** p = args;
 	for (p++; *p != NULL; p++)
 	{
-		do_close(sb,*p);
+		do_close(sb, *p);
 	}
 	return 1;
+}
+
+int my_touch(super_block* sb, char** args)
+{
+	if (args[1] == NULL)
+	{
+		printf("touch: missing file operand\n");
+		return 1;
+	}
+
+	char** p = args;
+	for (p++; *p != NULL; p++)
+	{
+		if (create_file(sb, current_dir, *p, 0, 0) < 0)
+		{
+			printf("touch: cannot create file %s.\n", *p);
+			return 1;
+		}
+	}
+	return 1;
+}
+
+void do_printf(fcb* ptr,int format){
+	switch (format)
+	{
+	case FILE_ATTRIBUTES_TITLE:
+		printf("%-10s\t%-10s\t%-12s\t%-16s\t%-16s\n",
+			"filename",
+			"length",
+			"attribute",
+			"create time",
+			"last modify time");
+		break;
+	case FILE_ATTRIBUTES:
+		if(!ptr){
+			printf("fcb NULL");
+			return;
+		}
+		printf("%-10s\t%-10d\t%-12s\t%-04d-%02d-%02d %02d:%02d\t%04d-%02d-%02d %02d:%02d\t\n",
+			ptr->filename,
+			ptr->length,
+			ptr->attribute == 1 ? "directory" : "file",
+			ptr->create_time.tm_year + BASE_YEAR,
+			ptr->create_time.tm_mon,
+			ptr->create_time.tm_mday,
+			ptr->create_time.tm_hour,
+			ptr->create_time.tm_min,
+			ptr->last_modify_time.tm_year + BASE_YEAR,
+			ptr->last_modify_time.tm_mon,
+			ptr->last_modify_time.tm_mday,
+			ptr->last_modify_time.tm_hour,
+			ptr->last_modify_time.tm_min);
+		break;
+	}
 }

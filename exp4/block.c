@@ -91,16 +91,18 @@ void merge_block(free_block_list* fbl1, free_block_list* fbl2)
 	list_del(&fbl2->list);
 }
 
-static char* left(char *dest,const char *src ,int n){
-    char *p=dest;
-    char *q=src;
-    int len=strlen(src);
-    if(n>len){
-        n=len;
-    }
-    while(n--) *(p++)=*(q++);
-    *(p++)='\0';
-    return dest;
+static char* left(char* dest, const char* src, int n)
+{
+	char* p = dest;
+	char* q = src;
+	int len = strlen(src);
+	if (n > len)
+	{
+		n = len;
+	}
+	while (n--) *(p++) = *(q++);
+	*(p++) = '\0';
+	return dest;
 }
 /**
  * 将目的路径和当前路径连接起来，然后进行解析，结果保存在DestFullPath中，但并不能保证目录中就有这个文件，需要配合findFcb使用
@@ -111,40 +113,51 @@ void getFullPath(char* DestFullPath, char* filePath)
 {
 	char str[_MAX_PATH];
 	char fullPath[_MAX_PATH] = "/";
-	
-   if(filePath[0]=='/'){
-       strcpy(str,filePath);
-   } else{
-       strcpy(str,current_dir_name);
-       strcat(str,filePath);
-   }
-	char *token;
-	token = strtok(str,"/");
-	while (token!=NULL){
+
+	if (filePath[0] == '/')
+	{
+		strcpy(str, filePath);
+	}
+	else
+	{
+		strcpy(str, current_dir_name);
+		strcat(str, filePath);
+	}
+	char* token;
+	token = strtok(str, "/");
+	while (token != NULL)
+	{
 		char fileName[_MAX_FNAME];
-		strcpy(fileName,token);
-		if(!strcmp(fileName,"..")){
+		strcpy(fileName, token);
+		if (!strcmp(fileName, ".."))
+		{
 			char parentPath[_MAX_PATH];
-			left(parentPath,fullPath,strlen(fullPath)-1);
+			left(parentPath, fullPath, strlen(fullPath) - 1);
 			char* ptr = strrchr(fullPath, '/');
 			char* ptr2 = strrchr(parentPath, '/');
 			int offset;
-			if(ptr2==NULL){
-				offset = (int) (ptr - fullPath);
-				strcpy(fullPath,fullPath+offset);
-			} else{
-				left(fullPath,fullPath,strlen(fullPath) - strlen(ptr2));
+			if (ptr2 == NULL)
+			{
+				offset = (int)(ptr - fullPath);
+				strcpy(fullPath, fullPath + offset);
 			}
-		}else if(!strcmp(fileName,".")){
-		} else{
-			strcat(fileName,"/");
-			strcat(fullPath,fileName);
+			else
+			{
+				left(fullPath, fullPath, strlen(fullPath) - strlen(ptr2));
+			}
 		}
-		token = strtok(NULL,"/");
+		else if (!strcmp(fileName, "."))
+		{
+		}
+		else
+		{
+			strcat(fileName, "/");
+			strcat(fullPath, fileName);
+		}
+		token = strtok(NULL, "/");
 	}
-	strcpy(DestFullPath,fullPath);
+	strcpy(DestFullPath, fullPath);
 }
-
 
 /**
  * 通过文件路径找到文件的fcb*
@@ -157,31 +170,41 @@ fcb* findFcb(super_block* sb, char* filePath)
 	getFullPath(fullPath, filePath);
 	fcb* ptr = index_to_fcb(sb, sb->root_index);
 	int flag = 0;
-    char fileName[_MAX_FNAME];
+	char fileName[_MAX_FNAME];
 	char* token = strtok(fullPath, "/");
-	if(!strcmp(fullPath,"/")){
-        flag=1;
-    } else{
-        while (token != NULL){
-            for (int i = 0; i < ptr->file_count; ++i){
-                inode* ptrInode = (inode*)do_read(sb, ptr, 0);
-                strcpy(fileName,ptrInode[i].filename);
-                if (!strcmp(ptrInode[i].filename, token)){
-                    ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-                    break;
-                }
-            }
-            char *nextToken = strtok(NULL, "/");
-            if (nextToken == NULL&&!strcmp(fileName, token)){
-                flag = 1;
-            }
-            if(nextToken!=NULL){
-                strcpy(token,nextToken);
-            } else{
-                token=NULL;
-            }
-        }
-    }
+	if (!strcmp(fullPath, "/"))
+	{
+		flag = 1;
+	}
+	else
+	{
+		while (token != NULL)
+		{
+			for (int i = 0; i < ptr->file_count; ++i)
+			{
+				inode* ptrInode = (inode*)do_read(sb, ptr, 0);
+				strcpy(fileName, ptrInode[i].filename);
+				if (!strcmp(ptrInode[i].filename, token))
+				{
+					ptr = index_to_fcb(sb, ptrInode[i].inode_index);
+					break;
+				}
+			}
+			char* nextToken = strtok(NULL, "/");
+			if (nextToken == NULL && !strcmp(fileName, token))
+			{
+				flag = 1;
+			}
+			if (nextToken != NULL)
+			{
+				strcpy(token, nextToken);
+			}
+			else
+			{
+				token = NULL;
+			}
+		}
+	}
 	if (flag == 0)
 	{
 		return NULL;

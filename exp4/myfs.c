@@ -37,13 +37,14 @@ void recover(super_block** sb, char* bak_file)
 	update_list(p_fbl, list, delta)
 	(*sb)->fcb_array = (void*)(*sb)->fcb_array + delta;
 	fclose(fp);
+
+	current_dir = index_to_fcb(*sb, (*sb)->root_index);
 }
 
 // 传递超级块指针的指针是为了让超级块指针指向0号内存
 // 也就是将超级块置于文件系统的起始位置
 void start_sys(char* bak_file, super_block** sb, int recreate)
 {
-	current_dir = malloc(sizeof(fcb));
 	FILE* fp;
 	fopen_s(&fp, bak_file, "rb");
 	if (recreate)
@@ -67,7 +68,6 @@ void start_sys(char* bak_file, super_block** sb, int recreate)
 		fclose(fp);
 		recover(sb, bak_file);
 	}
-
 }
 
 // 格式化文件系统
@@ -110,23 +110,23 @@ void my_format(super_block** p_sb)
 		exit(1);
 	}
 	sb->root_index = fcb_index;
-    inode root_dot;
-    root_dot.inode_index = fcb_index;
-    root_dot.attribute = DIRECTORY;
-    strcpy(root_dot.filename, ".");
-    do_write(sb, index_to_fcb(sb, fcb_index), &root_dot, sizeof(inode));
-    index_to_fcb(sb, fcb_index)->file_count = 1;
-    index_to_fcb(sb, fcb_index)->length = sizeof(inode);
+	inode root_dot;
+	root_dot.inode_index = fcb_index;
+	root_dot.attribute = DIRECTORY;
+	strcpy(root_dot.filename, ".");
+	do_write(sb, index_to_fcb(sb, fcb_index), &root_dot, sizeof(inode));
+	index_to_fcb(sb, fcb_index)->file_count = 1;
+	index_to_fcb(sb, fcb_index)->length = sizeof(inode);
 	size_t users_inode = create_dir(sb, index_to_fcb(sb, fcb_index), "users");
 	create_dir(sb, index_to_fcb(sb, users_inode), "root");
 	create_dir(sb, index_to_fcb(sb, users_inode), "guest");
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "groups");
 
 	// 初始化当前目录
-	memcpy(current_dir, index_to_fcb(sb, sb->root_index), sizeof(fcb));
-
+//	memcpy(current_dir, index_to_fcb(sb, sb->root_index), sizeof(fcb));
+	current_dir = index_to_fcb(sb, sb->root_index);
 	// 初始化文件打开表
-	do_open(sb,current_dir_name);
+	do_open(sb, current_dir_name);
 }
 
 void save(char* bak_file, super_block sb, size_t size)
@@ -215,83 +215,95 @@ void show_fs_info(super_block* sb)
 
 }
 
-int getLine(char *str, int lim, FILE *f) {
-    char c;
-    int i;
-    for (i = 0; i < lim - 1 && ( (c = fgetc(f)) != EOF && c != '\n'); ++i) {
-        str[i] = c;
-    }
-    // 处理输入时候的换行符
-    str[i] = '\0';
+int getLine(char* str, int lim, FILE* f)
+{
+	char c;
+	int i;
+	for (i = 0; i < lim - 1 && ((c = fgetc(f)) != EOF && c != '\n'); ++i)
+	{
+		str[i] = c;
+	}
+	// 处理输入时候的换行符
+	str[i] = '\0';
 
-    return i;
+	return i;
 }
 
-char **getArgs(char *cmd){
-    int bufSize = MAX_ARG_LENGTH, position = 0;
-    char **tokens = (char**)malloc(bufSize * sizeof(char*));
-    char *token;
+char** getArgs(char* cmd)
+{
+	int bufSize = MAX_ARG_LENGTH, position = 0;
+	char** tokens = (char**)malloc(bufSize * sizeof(char*));
+	char* token;
 
-    if (!tokens) {
-        printf( "\"csh error\": allocation error\n");
-        exit(EXIT_FAILURE);
-    }
+	if (!tokens)
+	{
+		printf("\"csh error\": allocation error\n");
+		exit(EXIT_FAILURE);
+	}
 
-    token = strtok(cmd, CSH_TOK_DELIM);
-    while (token != NULL) {
-        tokens[position] = token;
-        position++;
+	token = strtok(cmd, CSH_TOK_DELIM);
+	while (token != NULL)
+	{
+		tokens[position] = token;
+		position++;
 
-        if (position >= bufSize) {
-            bufSize += MAX_ARG_LENGTH;
-            tokens = realloc(tokens, bufSize * sizeof(char*));
-            if (!tokens) {
-                printf( "\"csh error\": allocation error\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-        token = strtok(NULL, CSH_TOK_DELIM);
-    }
-    tokens[position] = NULL; //在字符串数组末尾添加NULL，方便遍历
-    return tokens;
+		if (position >= bufSize)
+		{
+			bufSize += MAX_ARG_LENGTH;
+			tokens = realloc(tokens, bufSize * sizeof(char*));
+			if (!tokens)
+			{
+				printf("\"csh error\": allocation error\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		token = strtok(NULL, CSH_TOK_DELIM);
+	}
+	tokens[position] = NULL; //在字符串数组末尾添加NULL，方便遍历
+	return tokens;
 }
 
-int execute(super_block* sb,char **args){
-    if (args[0] == NULL)
-        //空命令
-        return 1;
-    for (int i = 0; i < sizeof(cmd) / sizeof(*cmd); ++i) {
-        if (!strcmp(args[0],cmd[i])){
-            return (*cmd_func[i])(sb,args);
-        }
-    }
+int execute(super_block* sb, char** args)
+{
+	if (args[0] == NULL)
+		//空命令
+		return 1;
+	for (int i = 0; i < sizeof(cmd) / sizeof(*cmd); ++i)
+	{
+		if (!strcmp(args[0], cmd[i]))
+		{
+			return (*cmd_func[i])(sb, args);
+		}
+	}
 	printf("\"csh error\": Unknown command\n");
 }
 
-void show_csh(super_block* sb){
-    char *cmd;
-    char **args;
-    int status = 1;
-    do {
-        printf("%s >",current_dir_name);
-        getLine(cmd, MAX_CMD_LENGTH, stdin);
-        args = getArgs(cmd);
-        status = execute(sb,args);
+void show_csh(super_block* sb)
+{
+	char* cmd = malloc(MAX_CMD_LENGTH);
+	char** args = malloc(MAX_ARG_LENGTH * sizeof(char*));
+	int status = 1;
+	do
+	{
+		printf("%s >", current_dir_name);
+		getLine(cmd, MAX_CMD_LENGTH, stdin);
+		args = getArgs(cmd);
+		status = execute(sb, args);
 
 /* 遍历参数
  * for (char **ptr =args; *ptr!=NULL; ptr++)
             printf("arg :%s\n",*ptr);*/
-    }while (status);
+	} while (status);
 }
 
 int main()
 {
-    start_sys("disk", &sb, 1);
-    save("disc.bak", *sb, SIZE);
-    create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
-    printf("/(dir)\n");
-    show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
-    show_csh(sb);
-    return 0;
+	start_sys("disk", &sb, 1);
+	save("disc.bak", *sb, SIZE);
+	create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
+	printf("/(dir)\n");
+	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
+	show_csh(sb);
+	return 0;
 }
 
