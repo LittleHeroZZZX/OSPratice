@@ -1017,6 +1017,28 @@ int do_close(super_block* sb, char* filePath)
 int my_close(super_block* sb, char** args)
 {
 	char** p = args;
+	if (*(p+1)==NULL){
+		printf("\"close\" error: missing argument\n");
+		return 1;
+	}
+	if (!strcmp(*(p+1),"--help")){
+		printf("Usage1: close [OPTION]... [FILE]\n");
+		printf("Usage2: close [FILE]... \n");
+		printf("Closes the specified file in addition to the current working directory \n");
+		printf("OPTION:\n");
+		printf("    -a: Closes all specified files except the current working directory \n");
+		return 1;
+	}
+	if (!strcmp(*(p+1),"-a")){
+		for (int i = 0; open_file_list[i]!=NULL && i<MAX_OPEN_FILE; ++i)
+		{
+			if (!strcmp(open_file_list[i]->path,current_dir_name)){
+				continue;
+			}
+			do_close(sb,open_file_list[i]->path);
+		}
+		return 1;
+	}
 	for (p++; *p != NULL; p++)
 	{
 		do_close(sb, *p);
