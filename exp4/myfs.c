@@ -217,10 +217,11 @@ void show_fs_info(super_block* sb)
 
 int getLine(char* str, int lim, FILE* f)
 {
-	char c;
+	int c;
 	int i;
-	for (i = 0; i < lim - 1 && ((c = fgetc(f)) != EOF && c != '\n'); ++i)
+	for (i = 0; i < lim - 1 && c != '\n'; ++i)
 	{
+		c = fgetc(f);
 		str[i] = c;
 	}
 	// 处理输入时候的换行符

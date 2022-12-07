@@ -114,12 +114,12 @@ int my_open(super_block* sb, char** args)
 	{
 		if (!strcmp(args[1], "-l"))
 		{
-			do_printf(NULL,FILE_ATTRIBUTES_TITLE);
+			do_printf(NULL, FILE_ATTRIBUTES_TITLE);
 			for (int i = 0; i < MAX_OPEN_FILE; i++)
 			{
 				if (open_file_list[i])
 				{
-					do_printf(open_file_list[i]->f_fcb,FILE_ATTRIBUTES);
+					do_printf(open_file_list[i]->f_fcb, FILE_ATTRIBUTES);
 				}
 			}
 			return 1;
@@ -226,12 +226,12 @@ int my_ls(super_block* sb, char** args)
 					return 1;
 				}
 			}
-			do_printf(NULL,FILE_ATTRIBUTES_TITLE);
+			do_printf(NULL, FILE_ATTRIBUTES_TITLE);
 			inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 			for (int i = 0; i < dirFcb->file_count; ++i)
 			{
 				fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-				do_printf(ptr,FILE_ATTRIBUTES);
+				do_printf(ptr, FILE_ATTRIBUTES);
 			}
 			return 1;
 		}
@@ -509,16 +509,16 @@ int my_write(super_block* sb, char** args)
 	}
 
 	// 从文件打开列表定位待写入文件
-	for (int i = 0; i < open_file_count; i++)
+	for (int i = 0; i < MAX_OPEN_FILE; i++)
 	{
-		if (!strcmp(open_file_list[i]->f_fcb->filename, args[1]))
+		if (open_file_list[i] && open_file_list[i]->f_fcb == findFcb(sb, args[1]))
 		{
-			if (open_file_list[i]->f_fcb->attribute == DIRECTORY)
+			_user_open = open_file_list[i];
+			if (_user_open->f_fcb->attribute == DIRECTORY)
 			{
 				printf("File trying to write is not a directory!\n");
 				return 1;
 			}
-			_user_open = open_file_list[i];
 			break;
 		}
 	}
@@ -529,7 +529,7 @@ int my_write(super_block* sb, char** args)
 	}
 	_user_open->mode = mode;
 	char* buf = do_read_ch(stdin);
-	_do_write(sb, _user_open, buf, sizeof(buf));
+	_do_write(sb, _user_open, buf, strlen(buf));
 
 	return 1;
 }
@@ -544,11 +544,10 @@ int my_write(super_block* sb, char** args)
 // 从输入流读取字符序列，直到遇到结束符EOF
 void* do_read_ch(void* stream)
 {
-	getchar();
 	const int BUFFER_BASE = 512;
 	int buf_size = BUFFER_BASE;
 	char* buf = malloc(buf_size * sizeof(char));
-	char ch;
+	int ch;
 	int i = 0;
 	while ((ch = fgetc(stream)) != EOF)
 	{
@@ -563,11 +562,12 @@ void* do_read_ch(void* stream)
 		}
 		buf[i++] = ch;
 	}
-	buf[i] = '\0';
+	buf[i++] = '\0';
 
 	char* final_buf = malloc(i * sizeof(char));
 	memcpy(final_buf, buf, i * sizeof(char));
 	free(buf);
+//	setbuf(stdin,NULL);
 	return final_buf;
 }
 
@@ -605,6 +605,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 			rest_size -= size_to_write;
 			_user_open->p_WR += size_to_write;
 		}
+		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
 		for (size_t i = old_block_cnt; i < new_block_cnt; i++)
 		{
 			new_blocks[i] = allocate_block(sb, 1);
@@ -619,6 +620,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		free_block(sb, addr_to_index(sb, (void*)_user_open->f_block_start), old_block_cnt);
 		new_block_size = size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
 		for (size_t i = 0; i < new_block_cnt; i++)
 		{
 			new_blocks[i] = allocate_block(sb, 1);
@@ -631,7 +633,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 	case OVERRIDE:
 		new_block_size = size > (_fcb->length - _user_open->p_WR) ? _user_open->p_WR + size : size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-		new_blocks = (size_t*)malloc(sizeof(size_t) * new_block_cnt);
+		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
 		for (size_t i = 0; i < new_block_cnt; i++)
 		{
 			new_blocks[i] = allocate_block(sb, 1);
@@ -890,28 +892,32 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 		else
 		{
 			// 释放文件blocks,把fcb的is_used置为0（在索引节点表中删除），在dir的文件内容中删除该文件的inode
-            size_t *blocks = get_blocks(sb, fcb);
-            size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-            for (size_t i = 0; i < block_cnt; i++) {
-                free_block(sb, blocks[i], 1);
-            }
-            free(blocks);
-            fcb->is_used = 0;
-            inode *inodes = (inode*)do_read(sb, dir, 0);
+			size_t* blocks = get_blocks(sb, fcb);
+			size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+			for (size_t i = 0; i < block_cnt; i++)
+			{
+				free_block(sb, blocks[i], 1);
+			}
+			free(blocks);
+			fcb->is_used = 0;
+			inode* inodes = (inode*)do_read(sb, dir, 0);
 //          从目录文件内删除这一项
-            for (size_t i = 0; i < dir->file_count; i++) {
-                if (strcpy(inodes[i].filename, fcb->filename) == 0) {
-                    for (size_t j = i; j < dir->file_count - 1; j++) {
-                        memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
-                    }
-                    break;
-                }
-            }
-            dir->file_count--;
-            clear_file(sb, dir);
-            do_write(sb, dir, (char*)inodes, dir->file_count * sizeof(inode));
-            free(inodes);
-            return 0;
+			for (size_t i = 0; i < dir->file_count; i++)
+			{
+				if (strcpy(inodes[i].filename, fcb->filename) == 0)
+				{
+					for (size_t j = i; j < dir->file_count - 1; j++)
+					{
+						memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
+					}
+					break;
+				}
+			}
+			dir->file_count--;
+			clear_file(sb, dir);
+			do_write(sb, dir, (char*)inodes, dir->file_count * sizeof(inode));
+			free(inodes);
+			return 0;
 		}
 	}
 }
@@ -923,25 +929,26 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
  */
 void clear_file(super_block* sb, fcb* fcb)
 {
-    size_t* blocks = get_blocks(sb, fcb);
-    size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    inode *inodes;
-    if (fcb->attribute == DIRECTORY)
-    {
-        inodes = (inode*)do_read(sb, fcb, sizeof(inode) * 2);
-    }
-    for (size_t i = 0; i < block_cnt; i++)
-    {
-        free_block(sb, blocks[i], 1);
-    }
-    free(blocks);
-    if (fcb->attribute == ORDINARY_FILE)
-        update_fcb(fcb, fcb->attribute, 0, 0, 0);
-    else {
-        update_fcb(fcb, fcb->attribute, 0, 2, 0);
-        do_write(sb, fcb, (char*)inodes, sizeof(inode) * 2);
-        free(inodes);
-    }
+	size_t* blocks = get_blocks(sb, fcb);
+	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	inode* inodes;
+	if (fcb->attribute == DIRECTORY)
+	{
+		inodes = (inode*)do_read(sb, fcb, sizeof(inode) * 2);
+	}
+	for (size_t i = 0; i < block_cnt; i++)
+	{
+		free_block(sb, blocks[i], 1);
+	}
+	free(blocks);
+	if (fcb->attribute == ORDINARY_FILE)
+		update_fcb(fcb, fcb->attribute, 0, 0, 0);
+	else
+	{
+		update_fcb(fcb, fcb->attribute, 0, 2, 0);
+		do_write(sb, fcb, (char*)inodes, sizeof(inode) * 2);
+		free(inodes);
+	}
 }
 
 /**
@@ -977,8 +984,8 @@ int my_rm(super_block* sb, char** args)
 
 int my_exit_sys(super_block* sb, char** args)
 {
-    save(DISK_BACKUP_FILENAME, sb, SIZE);
-    exit(0);
+	save(DISK_BACKUP_FILENAME, sb, SIZE);
+	exit(0);
 }
 
 int do_close(super_block* sb, char* filePath)
@@ -1066,7 +1073,8 @@ int my_touch(super_block* sb, char** args)
 	return 1;
 }
 
-void do_printf(fcb* ptr,int format){
+void do_printf(fcb* ptr, int format)
+{
 	switch (format)
 	{
 	case FILE_ATTRIBUTES_TITLE:
@@ -1078,7 +1086,8 @@ void do_printf(fcb* ptr,int format){
 			"last modify time");
 		break;
 	case FILE_ATTRIBUTES:
-		if(!ptr){
+		if (!ptr)
+		{
 			printf("fcb NULL");
 			return;
 		}
