@@ -33,13 +33,15 @@ void save_blocks(super_block* sb, fcb* fcb, size_t* blocks, size_t block_cnt);
 
 void update_fcb(fcb* fcb, unsigned char attribute, size_t length, size_t file_cnt, unsigned char create);
 
-int my_read(super_block* sb, user_open* _user_open, void* buf, size_t size);
-
-int my_write(super_block* sb, char** args);
-
 void* do_read_ch(void* stream);
 
-void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size);
+int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len);
+
+int my_read(super_block* sb, char** args);
+
+void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size, size_t p_wr);
+
+int my_write(super_block* sb, char** args);
 
 int my_cd(super_block* sb, char** args);
 
@@ -47,13 +49,13 @@ int my_mkdir(super_block* sb, char** args);
 
 int my_pwd(super_block* sb, char** args);
 
-int is_file_open(super_block *sb, char* filePath,user_open** _user_open,int file_type);
+int is_file_open(super_block* sb, char* filePath, user_open** _user_open, int file_type);
 
 fcb* index_to_fcb(super_block* sb, size_t index);
 
 ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb);
 
-void do_printf(fcb* ptr,int format);
+void do_printf(fcb* ptr, int format);
 
 void do_copy(super_block* sb, char* src, char* dest);
 
@@ -62,7 +64,6 @@ void do_cat(super_block* sb, fcb* fcb);
 ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir);
 
 void clear_file(super_block* sb, fcb* fcb);
-
 
 int my_rmdir(super_block* sb, char** args);
 int my_create(super_block* sb, char** args);

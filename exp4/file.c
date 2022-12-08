@@ -153,7 +153,7 @@ int my_open(super_block* sb, char** args)
 		}
 
 		//如果当前文件已经被打开
-		if (is_file_open(sb, filePath,NULL,-1) != -1)
+		if (is_file_open(sb, filePath, NULL, -1) >= 0)
 		{
 			printf("\"open error in argument%d\": cannot open %s: File or folder is open\n", cnt, filePath, *p);
 			return 1;
@@ -168,7 +168,7 @@ int my_open(super_block* sb, char** args)
 	return 1;
 }
 
-int is_file_open(super_block *sb,char* filePath, user_open** _user_open, int file_type)
+int is_file_open(super_block* sb, char* filePath, user_open** _user_open, int file_type)
 {
 	for (int i = 0; i < MAX_OPEN_FILE; i++)
 	{
@@ -187,7 +187,7 @@ int is_file_open(super_block *sb,char* filePath, user_open** _user_open, int fil
 			return i;
 		}
 	}
-	return -1;
+	return -2;
 }
 
 /**
@@ -332,7 +332,7 @@ int my_cd(super_block* sb, char** args)
 
 			// 如果文件未打开，需要先打开这个文件然后再cd过去
 			fd = is_file_open(sb, filePath, NULL, DIRECTORY);
-			current_dir_fd = fd == -1 ? do_open(sb, filePath) : fd;
+			current_dir_fd = fd == -2 ? do_open(sb, filePath) : fd;
 			current_dir = fcb;
 			getFullPath(current_dir_name, filePath);
 
@@ -444,34 +444,71 @@ size_t* get_blocks(super_block* sb, fcb* fcb)
  * @param size 读取的长度
  * @return 1
  */
-int my_read(super_block* sb, user_open* _user_open, void* buf, size_t size)
+int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len)
 {
-	if (_user_open->f_fcb->attribute == DIRECTORY)
-	{
-		printf("File to read is not a file!\n");
-		return 1;
-	}
 	if (!buf)
 	{
-		printf("Buffer is NULL!\n");
+		printf("_do_read: buf is NULL!\n");
+		return -1;
+	}
+	if (_user_open->p_WR == _user_open->f_fcb->length)
+	{
+		printf("_do_read: Read end of file!\n");
+		return -1;
+	}
+
+	void* p_buf = buf;
+
+	fcb* fcb = _user_open->f_fcb;
+	size_t offset = _user_open->p_WR;
+
+	size_t* blocks = get_blocks(sb, fcb);
+	size_t p_WR_index = offset / BLOCK_SIZE;
+	size_t p_WR_frag = offset % BLOCK_SIZE;
+	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	size_t size_to_read = len > fcb->length - offset ? fcb->length - offset : len;
+
+
+	if (p_WR_frag)
+	{
+		memcpy(p_buf, index_to_addr(sb, blocks[p_WR_index++]) + p_WR_frag, BLOCK_SIZE - p_WR_frag);
+		p_buf += BLOCK_SIZE - p_WR_frag;
+		_user_open->p_WR += BLOCK_SIZE - p_WR_frag;
+	}
+	for (size_t i = p_WR_index; i < block_cnt && size_to_read; i++)
+	{
+		size_t size_to_read_in_block = size_to_read > BLOCK_SIZE ? BLOCK_SIZE : size_to_read;
+		memcpy(p_buf, index_to_addr(sb, blocks[i]), size_to_read_in_block);
+		size_to_read -= size_to_read_in_block;
+		_user_open->p_WR += size_to_read_in_block;
+	}
+	free(blocks);
+	return 1;
+}
+
+int my_read(super_block* sb, char** args)
+{
+	if (!args[0] || !args[1] || !args[2])
+	{
+		printf("read: missing params\n");
 		return 1;
 	}
 
-	fcb* fcb = _user_open->f_fcb;
-	size_t rest_size = fcb->length > size ? size : fcb->length;
-	size_t offset = _user_open->p_WR;
-	size_t* blocks = get_blocks(sb, fcb);
-	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	size_t len = atoi(args[2]);
+	char* buf = (char*)malloc(len);
+	user_open* _user_open = NULL;
 
-	_user_open->p_WR = 0;
-	for (size_t i = 0; i < block_cnt; i++)
+	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
 	{
-		memcpy(buf + i * BLOCK_SIZE, index_to_addr(sb, blocks[i]), rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size);
-		rest_size -= BLOCK_SIZE;
-		_user_open->p_WR += BLOCK_SIZE;
+		printf("read: file[%s] not open\n", args[1]);
+		return 1;
 	}
-	free(blocks);
-	_user_open->p_WR = offset;
+	if (_do_read(sb, _user_open, buf, len) != -1)
+	{
+		printf("%s\n", buf);
+	}
+
+	free(buf);
 	return 1;
 }
 
@@ -484,7 +521,7 @@ int my_write(super_block* sb, char** args)
 	}
 
 	int mode = APPEND; // 默认追加模式
-	int offset = 0;
+	size_t offset = 0;
 	user_open* _user_open = NULL;
 
 	// 写入模式
@@ -513,16 +550,21 @@ int my_write(super_block* sb, char** args)
 		}
 	}
 
-	is_file_open(sb, args[1],&_user_open,ORDINARY_FILE);
-
-	if (!_user_open)
+	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
 	{
-		printf("File not opened!\n");
+		printf("write: file[%s] not open\n", args[1]);
 		return 1;
 	}
+
 	_user_open->mode = mode;
 	char* buf = do_read_ch(stdin);
-	_do_write(sb, _user_open, buf, strlen(buf));
+
+	if (offset > _user_open->f_fcb->length)
+	{
+		printf("R&W pointer accepted is out of range!\n");
+		return 1;
+	}
+	_do_write(sb, _user_open, buf, strlen(buf), offset);
 
 	return 1;
 }
@@ -560,7 +602,6 @@ void* do_read_ch(void* stream)
 	char* final_buf = malloc(i * sizeof(char));
 	memcpy(final_buf, buf, i * sizeof(char));
 	free(buf);
-//	setbuf(stdin,NULL);
 	return final_buf;
 }
 
@@ -572,33 +613,35 @@ void* do_read_ch(void* stream)
  * @param size 写入的长度
  * @return
  */
-void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
+void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size, size_t p_wr)
 {
 	fcb* _fcb = _user_open->f_fcb;
-	size_t* old_blocks, * new_blocks;
+	size_t* old_blocks = get_blocks(sb, _fcb);
 	size_t old_block_cnt = (_fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
 	size_t old_block_frag = _fcb->length % BLOCK_SIZE; //原始文件最后一块的块大小
+	size_t* new_blocks;
 	size_t new_block_size = 0;
 	size_t new_block_cnt = 0;
 	size_t rest_size = size;
 	size_t size_to_write = 0;
 	int mode = _user_open->mode;
 
+
 	switch (mode & 0b111)
 	{
 	case APPEND:
 		_user_open->p_WR = _fcb->length;
-		old_blocks = get_blocks(sb, _fcb);
 		new_block_size = _fcb->length + size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
+		memcpy(new_blocks, old_blocks, old_block_cnt * sizeof(size_t));
 		if (old_block_cnt)
 		{
-			size_to_write = BLOCK_SIZE - old_block_frag;
-			memcpy(index_to_addr(sb, old_blocks[old_block_cnt - 1]) + old_block_frag, buf, size_to_write);
+			size_to_write = rest_size > (BLOCK_SIZE - old_block_frag) ? (BLOCK_SIZE - old_block_frag) : rest_size;
+			memcpy(index_to_addr(sb, new_blocks[old_block_cnt - 1]) + old_block_frag, buf, size_to_write);
 			rest_size -= size_to_write;
 			_user_open->p_WR += size_to_write;
 		}
-		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
 		for (size_t i = old_block_cnt; i < new_block_cnt; i++)
 		{
 			new_blocks[i] = allocate_block(sb, 1);
@@ -610,7 +653,6 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		break;
 	case TRUNCATE:
 		_user_open->p_WR = 0;
-		old_blocks = get_blocks(sb, _user_open->f_fcb);
 		for (int i = 0; i < old_block_cnt; i++)
 		{
 			free_block(sb, old_blocks[i], 1);
@@ -628,14 +670,24 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		}
 		break;
 	case OVERRIDE:
-		new_block_size = size > (_fcb->length - _user_open->p_WR) ? _user_open->p_WR + size : size;
+		old_block_cnt = (p_wr + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		old_block_frag = p_wr % BLOCK_SIZE;
+		new_block_size = p_wr + size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
-		for (size_t i = 0; i < new_block_cnt; i++)
+		memcpy(new_blocks, old_blocks, old_block_cnt * sizeof(size_t));
+		if (old_block_cnt)
+		{
+			size_to_write = rest_size > (BLOCK_SIZE - old_block_frag) ? (BLOCK_SIZE - old_block_frag) : rest_size;
+			memcpy(index_to_addr(sb, new_blocks[old_block_cnt - 1]) + old_block_frag, buf, size_to_write);
+			rest_size -= size_to_write;
+			_user_open->p_WR += size_to_write;
+		}
+		for (size_t i = old_block_cnt; i < new_block_cnt; i++)
 		{
 			new_blocks[i] = allocate_block(sb, 1);
 			size_to_write = rest_size > BLOCK_SIZE ? BLOCK_SIZE : rest_size;
-			memcpy((void*)_user_open->p_WR, buf + size - rest_size, size_to_write);
+			memcpy(index_to_addr(sb, new_blocks[i]), buf + size - rest_size, size_to_write);
 			rest_size -= size_to_write;
 			_user_open->p_WR += size_to_write;
 		}
@@ -693,9 +745,8 @@ void do_write(super_block* sb, fcb* fcb, void* buff, size_t size)
 	memcpy(new_blocks, blocks, sizeof(size_t) * block_cnt);
 	if (block_cnt > 0)
 	{
-        size_t block_free_size = BLOCK_SIZE - fcb->length % BLOCK_SIZE;
 		memcpy(index_to_addr(sb, new_blocks[block_cnt - 1]) + fcb->length % BLOCK_SIZE, buff,
-			block_free_size > size ? size : block_free_size);
+			BLOCK_SIZE - fcb->length % BLOCK_SIZE);
 		rest_size -= BLOCK_SIZE - fcb->length % BLOCK_SIZE;
 	}
 	for (size_t i = block_cnt; i < (fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
@@ -820,9 +871,8 @@ void do_cat(super_block* sb, fcb* fcb)
 	buf = do_read(sb, fcb, 0);
 	for (size_t i = 0; i < fcb->length; i++)
 		printf("%c", buf[i]);
-    printf("\n");
+	printf("\n");
 }
-
 
 int my_cat(super_block* sb, char** args)
 {
@@ -833,12 +883,12 @@ int my_cat(super_block* sb, char** args)
 	}
 
 	user_open* _user_open = NULL;
-	is_file_open(sb, args[1], &_user_open, ORDINARY_FILE);
-	if (!_user_open)
+	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
 	{
-		printf("File not opened!\n");
+		printf("File not open.\n");
 		return 1;
 	}
+
 	do_cat(sb, _user_open->f_fcb);
 	return 1;
 }
@@ -1072,7 +1122,7 @@ int do_close(super_block* sb, char* filePath)
 		return 1;
 	}
 	int index = is_file_open(sb, filePath, NULL, -1);
-	if (index != -1)
+	if (index >= 0)
 	{
 		//	当前工作路径无法close
 		if (!strcmp(open_file_list[index]->path, current_dir_name))
@@ -1135,13 +1185,13 @@ int my_close(super_block* sb, char** args)
 
 int my_cp(super_block* sb, char** args)
 {
-    if (args[1] == NULL || args[2] == NULL)
-    {
-        printf("cp: missing file operand\n");
-        return 1;
-    }
-    do_copy(sb, args[1], args[2]);
-    return 1;
+	if (args[1] == NULL || args[2] == NULL)
+	{
+		printf("cp: missing file operand\n");
+		return 1;
+	}
+	do_copy(sb, args[1], args[2]);
+	return 1;
 }
 
 int my_touch(super_block* sb, char** args)
@@ -1202,28 +1252,27 @@ void do_printf(fcb* ptr, int format)
 
 void do_copy(super_block* sb, char* src, char* dest)
 {
-    FILE *fp = fopen(src, "rb");
-    if (fp == NULL)
-    {
-        printf("copy: cannot open %s: No such file or directory\n", src);
-        return;
-    }
-    fcb *dest_fcb = findFcb(sb, dest);
-    fcb *dest_parent_fcb = findParentFcb(sb, dest);
-    if (dest_fcb == NULL)
-    {
-        printf("copy: cannot open %s: No such file or directory\n", dest);
-        return;
-    }
-    char buff[BLOCK_SIZE];
-    size_t len;
-    while ((len = fread(buff, 1, BLOCK_SIZE, fp)) > 0)
-    {
-        do_write(sb, dest_fcb, buff, len);
-    }
-    fclose(fp);
+	FILE* fp = fopen(src, "rb");
+	if (fp == NULL)
+	{
+		printf("copy: cannot open %s: No such file or directory\n", src);
+		return;
+	}
+	fcb* dest_fcb = findFcb(sb, dest);
+	fcb* dest_parent_fcb = findParentFcb(sb, dest);
+	if (dest_fcb == NULL)
+	{
+		printf("copy: cannot open %s: No such file or directory\n", dest);
+		return;
+	}
+	char buff[BLOCK_SIZE];
+	size_t len;
+	while ((len = fread(buff, 1, BLOCK_SIZE, fp)) > 0)
+	{
+		do_write(sb, dest_fcb, buff, len);
+	}
+	fclose(fp);
 }
-
 
 int my_clear(super_block* sb, char** args)
 {
