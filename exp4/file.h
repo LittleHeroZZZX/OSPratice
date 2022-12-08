@@ -47,7 +47,7 @@ int my_mkdir(super_block* sb, char** args);
 
 int my_pwd(super_block* sb, char** args);
 
-int is_file_open(char* filePath);
+int is_file_open(char* filePath,user_open** _user_open,int file_type);
 
 fcb* index_to_fcb(super_block* sb, size_t index);
 
@@ -58,6 +58,9 @@ void do_printf(fcb* ptr,int format);
 void do_copy(super_block* sb, char* src, char* dest);
 
 void do_cat(super_block* sb, fcb* fcb);
+void do_cat(super_block* sb, fcb* fcb);
+
+int my_cat(super_block* sb, char** args);
 
 ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir);
 
