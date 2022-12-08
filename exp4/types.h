@@ -12,6 +12,9 @@
 #include "list.h"
 
 
+#define CMD_TYPES 16
+
+
 #define BLOCK_SIZE 1024
 #define SIZE (512*1024*1024)
 #define DISK_BACKUP_FILENAME "disk.bak"
@@ -122,7 +125,7 @@ extern fcb* current_dir;
 
 extern char current_dir_name[_MAX_PATH];
 
-extern char cmd[15][6];
+extern char cmd[CMD_TYPES][6];
 
 extern int (* cmd_func[])(super_block*, char**);
 

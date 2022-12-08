@@ -56,7 +56,7 @@ void* index_to_addr(super_block* sb, size_t index)
 	return sb->start_pos + index * BLOCK_SIZE;
 }
 
-__attribute__((unused)) size_t addr_to_index(super_block* sb, void* addr)
+ size_t addr_to_index(super_block* sb, void* addr)
 {
 	return (addr - sb->start_pos) / BLOCK_SIZE;
 }

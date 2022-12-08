@@ -32,6 +32,6 @@ fcb* findParentFcb(super_block* sb, char* filePath);
  */
 void getFullPath(char* DestFullPath, char* filePath);
 
-__attribute__((unused)) size_t addr_to_index(super_block* sb, void* addr);
+size_t addr_to_index(super_block* sb, void* addr);
 
 #endif //BLOCK_H

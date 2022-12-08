@@ -816,12 +816,36 @@ fcb* index_to_fcb(super_block* sb, size_t index)
 	return &sb->fcb_array[index];
 }
 
-void my_cat(super_block* sb, fcb* fcb)
+void do_cat(super_block* sb, fcb* fcb)
 {
 	char* buf = malloc(fcb->length + 1);
 	buf = do_read(sb, fcb, 0);
 	for (size_t i = 0; i < fcb->length; i++)
 		printf("%c", buf[i]);
+    printf("\n");
+}
+
+int my_cat(super_block* sb, char** args)
+{
+    if (args[1] == NULL)
+    {
+        printf("cat: missing operand\n");
+        return 1;
+    }
+    char* path = args[1];
+    fcb* fcb = findFcb(sb, path);
+    if (fcb == NULL)
+    {
+        printf("cat: %s: No such file or directory\n", path);
+        return 1;
+    }
+    if (fcb->attribute & 0x10)
+    {
+        printf("cat: %s: Is a directory\n", path);
+        return 1;
+    }
+    do_cat(sb, fcb);
+    return 1;
 }
 
 /**
@@ -1099,6 +1123,17 @@ int my_close(super_block* sb, char** args)
 	return 1;
 }
 
+int my_cp(super_block* sb, char** args)
+{
+    if (args[1] == NULL || args[2] == NULL)
+    {
+        printf("cp: missing file operand\n");
+        return 1;
+    }
+    do_copy(sb, args[1], args[2]);
+    return 1;
+}
+
 int my_touch(super_block* sb, char** args)
 {
 	if (args[1] == NULL)
@@ -1153,6 +1188,30 @@ void do_printf(fcb* ptr, int format)
 			ptr->last_modify_time.tm_min);
 		break;
 	}
+}
+
+void do_copy(super_block* sb, char* src, char* dest)
+{
+    FILE *fp = fopen(src, "rb");
+    if (fp == NULL)
+    {
+        printf("copy: cannot open %s: No such file or directory\n", src);
+        return;
+    }
+    fcb *dest_fcb = findFcb(sb, dest);
+    fcb *dest_parent_fcb = findParentFcb(sb, dest);
+    if (dest_fcb == NULL)
+    {
+        printf("copy: cannot open %s: No such file or directory\n", dest);
+        return;
+    }
+    char buff[BLOCK_SIZE];
+    size_t len;
+    while ((len = fread(buff, 1, BLOCK_SIZE, fp)) > 0)
+    {
+        do_write(sb, dest_fcb, buff, len);
+    }
+    fclose(fp);
 }
 
 int my_clear(super_block* sb, char** args){

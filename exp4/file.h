@@ -55,11 +55,14 @@ ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb);
 
 void do_printf(fcb* ptr,int format);
 
-void my_cat(super_block* sb, fcb* fcb);
+void do_copy(super_block* sb, char* src, char* dest);
+
+void do_cat(super_block* sb, fcb* fcb);
 
 ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir);
 
 void clear_file(super_block* sb, fcb* fcb);
+
 
 int my_rmdir(super_block* sb, char** args);
 int my_create(super_block* sb, char** args);
@@ -69,4 +72,6 @@ int my_close(super_block* sb, char** args);
 int do_close(super_block* sb, char* filePath);
 int my_touch(super_block* sb, char** args);
 int my_clear(super_block* sb, char** args);
+int my_cp(super_block* sb, char** args);
+int my_cat(super_block* sb, char** args);
 
