@@ -285,7 +285,7 @@ void show_csh(super_block* sb)
 	int status = 1;
 	do
 	{
-		printf("%s >", current_dir_name);
+		printf("%s>", current_dir_name);
 		getLine(cmd, MAX_CMD_LENGTH, stdin);
 		args = getArgs(cmd);
 		status = execute(sb, args);
