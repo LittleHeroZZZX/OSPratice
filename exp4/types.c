@@ -2,7 +2,6 @@
 #include "types.h"
 #include "file.h"
 
-super_block* sb;
 
 int open_file_count = 0;
 

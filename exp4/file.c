@@ -155,7 +155,7 @@ int my_open(super_block* sb, char** args)
 		//如果当前文件已经被打开
 		if (is_file_open(sb, filePath,NULL,-1) != -1)
 		{
-			printf("\"open error in argument%d\": cannot open %s: File or folder is open\n", cnt, filePath, *p);
+			printf("\"open error in argument%d\": cannot open %s: File or folder is open\n", cnt, filePath);
 			return 1;
 		}
 
@@ -227,7 +227,7 @@ int my_ls(super_block* sb, char** args)
 				}
 				if (dirFcb->attribute == ORDINARY_FILE)
 				{
-					printf("\"ls\": ls cannot be used for files\n", *p++);
+					printf("\"ls\": ls %s cannot be used for files\n", *p++);
 					return 1;
 				}
 			}
