@@ -822,28 +822,6 @@ void do_cat(super_block* sb, fcb* fcb)
     printf("\n");
 }
 
-int my_cat(super_block* sb, char** args)
-{
-    if (args[1] == NULL)
-    {
-        printf("cat: missing operand\n");
-        return 1;
-    }
-    char* path = args[1];
-    fcb* fcb = findFcb(sb, path);
-    if (fcb == NULL)
-    {
-        printf("cat: %s: No such file or directory\n", path);
-        return 1;
-    }
-    if (fcb->attribute & 0x10)
-    {
-        printf("cat: %s: Is a directory\n", path);
-        return 1;
-    }
-    do_cat(sb, fcb);
-    return 1;
-}
 
 int my_cat(super_block* sb, char** args)
 {
@@ -1245,7 +1223,7 @@ void do_copy(super_block* sb, char* src, char* dest)
     fclose(fp);
 }
 
-int my_clear(super_block* sb, char** args){
+
 int my_clear(super_block* sb, char** args)
 {
 	//在CLion中无法清空，在系统的cmd中才可以
