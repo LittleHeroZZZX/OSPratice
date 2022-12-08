@@ -49,25 +49,30 @@ void start_sys(char* bak_file, super_block** sb, int recreate)
 	fopen_s(&fp, bak_file, "rb");
 	if (recreate)
 	{
-		printf("recreate file system\n");
+        free(*sb);
+		printf("Recreating file system\n");
 		my_format(sb);
 		if (fp != NULL)
 		{
 			fclose(fp);
 			remove(bak_file);
 		}
+        puts("File system created");
 	}
 	else if (fp == NULL)
 	{
 		printf("No backup file found, creating a new file system.\n");
 		my_format(sb);
+        puts("File system created");
 	}
 	else
 	{
 		printf("Backup file found, recovering file system.\n");
 		fclose(fp);
 		recover(sb, bak_file);
+        puts("File system recovered");
 	}
+    show_fs_info(*sb);
 }
 
 // 格式化文件系统
@@ -122,9 +127,8 @@ void my_format(super_block** p_sb)
 	create_dir(sb, index_to_fcb(sb, users_inode), "guest");
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "groups");
 
-	// 初始化当前目录
-//	memcpy(current_dir, index_to_fcb(sb, sb->root_index), sizeof(fcb));
-	current_dir = index_to_fcb(sb, sb->root_index);
+
+    current_dir = index_to_fcb(sb, sb->root_index);
 	// 初始化文件打开表
 	do_open(sb, current_dir_name);
 }
@@ -194,8 +198,6 @@ void show_dirs(super_block* sb, fcb* fcb, size_t level)
 }
 void show_fs_info(super_block* sb)
 {
-	printf("******************************************\n");
-	printf("******************************************\n");
 	printf("%-20s: %lldMB %lldKB\n",
 		"disk space size",
 		sb->block_count * BLOCK_SIZE / 1024 / 1024,
@@ -209,9 +211,6 @@ void show_fs_info(super_block* sb)
 		"max file size",
 		MAX_FILE_SIZE / 1024 / 1024,
 		MAX_FILE_SIZE / 1024 % 1024);
-
-	printf("******************************************\n");
-	printf("******************************************\n");
 
 }
 
@@ -280,6 +279,18 @@ int execute(super_block* sb, char** args)
 
 void show_csh(super_block* sb)
 {
+    printf("Welcome to our file system!\nWould you like to recover from the backup file? (y/n)\n");
+    char c;
+    scanf("%c", &c);
+    if (c == 'y' || c == 'Y')
+    {
+        start_sys(DISK_BACKUP_FILENAME, &sb, 0);
+    }
+    else
+    {
+        start_sys(DISK_BACKUP_FILENAME, &sb, 1);
+    }
+    getchar();
 	char* cmd = malloc(MAX_CMD_LENGTH);
 	char** args = malloc(MAX_ARG_LENGTH * sizeof(char*));
 	int status = 1;
@@ -298,9 +309,8 @@ void show_csh(super_block* sb)
 
 int main()
 {
-	start_sys(DISK_BACKUP_FILENAME, &sb, 0);
-	printf("/(dir)\n");
-	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
+    super_block* sb = NULL;
+    setbuf(stdout, NULL);
 	show_csh(sb);
 	return 0;
 }

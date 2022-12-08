@@ -11,7 +11,6 @@
 #include "stdlib.h"
 #include "list.h"
 
-
 #define CMD_TYPES 16
 
 
@@ -119,7 +118,6 @@ typedef struct user_open
 	unsigned char fcb_modified;    // 文件FCB修改判定位
 } user_open;
 
-extern super_block* sb;
 
 extern fcb* current_dir;
 

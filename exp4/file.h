@@ -47,7 +47,7 @@ int my_mkdir(super_block* sb, char** args);
 
 int my_pwd(super_block* sb, char** args);
 
-int is_file_open(char* filePath,user_open** _user_open,int file_type);
+int is_file_open(super_block *sb, char* filePath,user_open** _user_open,int file_type);
 
 fcb* index_to_fcb(super_block* sb, size_t index);
 

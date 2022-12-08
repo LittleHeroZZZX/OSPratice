@@ -153,7 +153,7 @@ int my_open(super_block* sb, char** args)
 		}
 
 		//如果当前文件已经被打开
-		if (is_file_open(filePath,NULL,-1) != -1)
+		if (is_file_open(sb, filePath,NULL,-1) != -1)
 		{
 			printf("\"open error in argument%d\": cannot open %s: File or folder is open\n", cnt, filePath, *p);
 			return 1;
@@ -168,7 +168,7 @@ int my_open(super_block* sb, char** args)
 	return 1;
 }
 
-int is_file_open(char* filePath, user_open** _user_open, int file_type)
+int is_file_open(super_block *sb,char* filePath, user_open** _user_open, int file_type)
 {
 	for (int i = 0; i < MAX_OPEN_FILE; i++)
 	{
@@ -331,7 +331,7 @@ int my_cd(super_block* sb, char** args)
 			strcpy(old_current_dir_name, current_dir_name);
 
 			// 如果文件未打开，需要先打开这个文件然后再cd过去
-			fd = is_file_open(filePath, NULL, DIRECTORY);
+			fd = is_file_open(sb, filePath, NULL, DIRECTORY);
 			current_dir_fd = fd == -1 ? do_open(sb, filePath) : fd;
 			current_dir = fcb;
 			getFullPath(current_dir_name, filePath);
@@ -513,7 +513,7 @@ int my_write(super_block* sb, char** args)
 		}
 	}
 
-	is_file_open(args[1],&_user_open,ORDINARY_FILE);
+	is_file_open(sb, args[1],&_user_open,ORDINARY_FILE);
 
 	if (!_user_open)
 	{
@@ -693,8 +693,9 @@ void do_write(super_block* sb, fcb* fcb, void* buff, size_t size)
 	memcpy(new_blocks, blocks, sizeof(size_t) * block_cnt);
 	if (block_cnt > 0)
 	{
+        size_t block_free_size = BLOCK_SIZE - fcb->length % BLOCK_SIZE;
 		memcpy(index_to_addr(sb, new_blocks[block_cnt - 1]) + fcb->length % BLOCK_SIZE, buff,
-			BLOCK_SIZE - fcb->length % BLOCK_SIZE);
+			block_free_size > size ? size : block_free_size);
 		rest_size -= BLOCK_SIZE - fcb->length % BLOCK_SIZE;
 	}
 	for (size_t i = block_cnt; i < (fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
@@ -832,7 +833,7 @@ int my_cat(super_block* sb, char** args)
 	}
 
 	user_open* _user_open = NULL;
-	is_file_open(args[1], &_user_open, ORDINARY_FILE);
+	is_file_open(sb, args[1], &_user_open, ORDINARY_FILE);
 	if (!_user_open)
 	{
 		printf("File not opened!\n");
@@ -1070,7 +1071,7 @@ int do_close(super_block* sb, char* filePath)
 		printf("\"close error\": cannot open %s: There is no such file or folder\n", filePath);
 		return 1;
 	}
-	int index = is_file_open(filePath, NULL, -1);
+	int index = is_file_open(sb, filePath, NULL, -1);
 	if (index != -1)
 	{
 		//	当前工作路径无法close
