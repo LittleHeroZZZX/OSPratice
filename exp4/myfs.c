@@ -219,11 +219,10 @@ int getLine(char* str, int lim, FILE* f)
 {
 	int c;
 	int i;
-	for (i = 0; i < lim - 1 && c != '\n'; ++i)
-	{
-		c = fgetc(f);
-		str[i] = c;
-	}
+    while ((c = fgetc(f)) != EOF && c!='\n')
+    {
+        str[i++] = c;
+    }
 	// 处理输入时候的换行符
 	str[i] = '\0';
 
@@ -299,7 +298,7 @@ void show_csh(super_block* sb)
 
 int main()
 {
-	start_sys(DISK_BACKUP_FILENAME, &sb, 0);
+	start_sys(DISK_BACKUP_FILENAME, &sb, 1);
 	create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
 	printf("/(dir)\n");
 	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
