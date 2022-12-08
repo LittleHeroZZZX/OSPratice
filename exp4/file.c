@@ -617,7 +617,10 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		break;
 	case TRUNCATE:
 		_user_open->p_WR = 0;
-		free_block(sb, addr_to_index(sb, (void*)_user_open->f_block_start), old_block_cnt);
+		old_blocks= get_blocks(sb,_user_open->f_fcb);
+		for(int i=0;i<old_block_cnt;i++){
+			free_block(sb,old_blocks[i],1);
+		}
 		new_block_size = size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
