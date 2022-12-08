@@ -55,7 +55,9 @@ ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb);
 
 void do_printf(fcb* ptr,int format);
 
-void my_cat(super_block* sb, fcb* fcb);
+void do_cat(super_block* sb, fcb* fcb);
+
+int my_cat(super_block* sb, char** args);
 
 ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir);
 

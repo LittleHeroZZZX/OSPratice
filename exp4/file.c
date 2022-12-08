@@ -617,9 +617,10 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
 		break;
 	case TRUNCATE:
 		_user_open->p_WR = 0;
-		old_blocks= get_blocks(sb,_user_open->f_fcb);
-		for(int i=0;i<old_block_cnt;i++){
-			free_block(sb,old_blocks[i],1);
+		old_blocks = get_blocks(sb, _user_open->f_fcb);
+		for (int i = 0; i < old_block_cnt; i++)
+		{
+			free_block(sb, old_blocks[i], 1);
 		}
 		new_block_size = size;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -662,8 +663,8 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size)
  */
 void* do_read(super_block* sb, fcb* fcb, size_t size)
 {
-    if(fcb->length == 0)
-        return NULL;
+	if (fcb->length == 0)
+		return NULL;
 	size_t rest_size = size;
 	size_t* blocks;
 	void* buff;
@@ -819,12 +820,44 @@ fcb* index_to_fcb(super_block* sb, size_t index)
 	return &sb->fcb_array[index];
 }
 
-void my_cat(super_block* sb, fcb* fcb)
+void do_cat(super_block* sb, fcb* fcb)
 {
 	char* buf = malloc(fcb->length + 1);
 	buf = do_read(sb, fcb, 0);
 	for (size_t i = 0; i < fcb->length; i++)
 		printf("%c", buf[i]);
+}
+
+int my_cat(super_block* sb, char** args)
+{
+	if (args[1] == NULL)
+	{
+		printf("Please input the file name.\n");
+		return 1;
+	}
+
+	user_open* _user_open = NULL;
+	// 从文件打开列表定位待写入文件
+	for (int i = 0; i < MAX_OPEN_FILE; i++)
+	{
+		if (open_file_list[i] && open_file_list[i]->f_fcb == findFcb(sb, args[1]))
+		{
+			_user_open = open_file_list[i];
+			if (_user_open->f_fcb->attribute == DIRECTORY)
+			{
+				printf("File trying to write is not a directory!\n");
+				return 1;
+			}
+			break;
+		}
+	}
+	if (!_user_open)
+	{
+		printf("File not opened!\n");
+		return 1;
+	}
+	do_cat(sb, _user_open->f_fcb);
+	return 1;
 }
 
 /**
@@ -907,57 +940,66 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 			fcb->is_used = 0;
 			inode* inodes = (inode*)do_read(sb, dir, 0);
 //          从目录文件内删除这一项
-            for (size_t i = 0; i < dir->file_count; i++) {
-                if (index_to_fcb(sb, inodes[i].inode_index) == fcb) {
-                    for (size_t j = i; j < dir->file_count - 1; j++) {
-                        memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
-                    }
-                    break;
-                }
-            }
-            size_t remain_count = dir->file_count - 1;
-            size_t root_offset = 2;
-            if (strcmp(dir->filename, "/") == 0) {
-                root_offset = 1;
-            }
-            clear_file(sb, dir);
-            do_write(sb, dir, (char*)(inodes+root_offset), (remain_count-root_offset) * sizeof(inode));
-            update_fcb(dir, DIRECTORY, sizeof (inode) * (remain_count), remain_count, 0);
-            free(inodes);
-            return 0;
+			for (size_t i = 0; i < dir->file_count; i++)
+			{
+				if (index_to_fcb(sb, inodes[i].inode_index) == fcb)
+				{
+					for (size_t j = i; j < dir->file_count - 1; j++)
+					{
+						memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
+					}
+					break;
+				}
+			}
+			size_t remain_count = dir->file_count - 1;
+			size_t root_offset = 2;
+			if (strcmp(dir->filename, "/") == 0)
+			{
+				root_offset = 1;
+			}
+			clear_file(sb, dir);
+			do_write(sb, dir, (char*)(inodes + root_offset), (remain_count - root_offset) * sizeof(inode));
+			update_fcb(dir, DIRECTORY, sizeof(inode) * (remain_count), remain_count, 0);
+			free(inodes);
+			return 0;
 		}
 	}
-    else
-    {
+	else
+	{
 //        释放文件blocks，把fcb的is_used置为0（在索引节点表中删除），在dir的文件内容中删除该文件的inode
-        size_t *blocks = get_blocks(sb, fcb);
-        size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-        for (size_t i = 0; i < block_cnt; i++) {
-            free_block(sb, blocks[i], 1);
-        }
-        free(blocks);
-        fcb->is_used = 0;
-        inode *inodes = (inode*)do_read(sb, dir, 0);
-        for (size_t i = 0; i < dir->file_count; i++) {
-            if (index_to_fcb(sb, inodes[i].inode_index) == fcb) {
-                for (size_t j = i; j < dir->file_count - 1; j++) {
-                    memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
-                }
-                break;
-            }
-        }
-        size_t remain_count = dir->file_count - 1;
-        size_t root_offset = 2;
-        if (strcmp(dir->filename, "/") == 0) {
-            root_offset = 1;
-        }
-        clear_file(sb, dir);
-        do_write(sb, dir, (char*)(inodes+root_offset), (remain_count-root_offset) * sizeof(inode));
-        update_fcb(dir, DIRECTORY, sizeof (inode) * (remain_count), remain_count, 0);
-        free(inodes);
-        return 0;
+		size_t* blocks = get_blocks(sb, fcb);
+		size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+		for (size_t i = 0; i < block_cnt; i++)
+		{
+			free_block(sb, blocks[i], 1);
+		}
+		free(blocks);
+		fcb->is_used = 0;
+		inode* inodes = (inode*)do_read(sb, dir, 0);
+		for (size_t i = 0; i < dir->file_count; i++)
+		{
+			if (index_to_fcb(sb, inodes[i].inode_index) == fcb)
+			{
+				for (size_t j = i; j < dir->file_count - 1; j++)
+				{
+					memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
+				}
+				break;
+			}
+		}
+		size_t remain_count = dir->file_count - 1;
+		size_t root_offset = 2;
+		if (strcmp(dir->filename, "/") == 0)
+		{
+			root_offset = 1;
+		}
+		clear_file(sb, dir);
+		do_write(sb, dir, (char*)(inodes + root_offset), (remain_count - root_offset) * sizeof(inode));
+		update_fcb(dir, DIRECTORY, sizeof(inode) * (remain_count), remain_count, 0);
+		free(inodes);
+		return 0;
 
-    }
+	}
 }
 
 /**
@@ -967,30 +1009,31 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
  */
 void clear_file(super_block* sb, fcb* fcb)
 {
-    size_t* blocks = get_blocks(sb, fcb);
-    size_t remain = 0;
-    size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    inode *inodes;
-    if (fcb->attribute == DIRECTORY)
-    {
-        if (strcmp("/", fcb->filename) == 0)
-            remain = 1;
-        else
-            remain = 2;
-        inodes = (inode*)do_read(sb, fcb, sizeof(inode) * 2);
-    }
-    for (size_t i = 0; i < block_cnt; i++)
-    {
-        free_block(sb, blocks[i], 1);
-    }
-    free(blocks);
-    if (fcb->attribute == ORDINARY_FILE)
-        update_fcb(fcb, fcb->attribute, 0, 0, 0);
-    else {
-        update_fcb(fcb, fcb->attribute, 0, remain, 0);
-        do_write(sb, fcb, (char*)inodes, sizeof(inode) * remain);
-        free(inodes);
-    }
+	size_t* blocks = get_blocks(sb, fcb);
+	size_t remain = 0;
+	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	inode* inodes;
+	if (fcb->attribute == DIRECTORY)
+	{
+		if (strcmp("/", fcb->filename) == 0)
+			remain = 1;
+		else
+			remain = 2;
+		inodes = (inode*)do_read(sb, fcb, sizeof(inode) * 2);
+	}
+	for (size_t i = 0; i < block_cnt; i++)
+	{
+		free_block(sb, blocks[i], 1);
+	}
+	free(blocks);
+	if (fcb->attribute == ORDINARY_FILE)
+		update_fcb(fcb, fcb->attribute, 0, 0, 0);
+	else
+	{
+		update_fcb(fcb, fcb->attribute, 0, remain, 0);
+		do_write(sb, fcb, (char*)inodes, sizeof(inode) * remain);
+		free(inodes);
+	}
 }
 
 /**
@@ -1021,13 +1064,14 @@ int my_create(super_block* sb, char** args)
 
 int my_rm(super_block* sb, char** args)
 {
-    fcb* ptr = findFcb(sb, args[1]);
-    fcb* parent = findParentFcb(sb, args[1]);
-    if (ptr == NULL || parent == NULL) {
-        printf("No such file or directory\n");
-        return 1;
-    }
-    delete_file(sb, ptr, parent);
+	fcb* ptr = findFcb(sb, args[1]);
+	fcb* parent = findParentFcb(sb, args[1]);
+	if (ptr == NULL || parent == NULL)
+	{
+		printf("No such file or directory\n");
+		return 1;
+	}
+	delete_file(sb, ptr, parent);
 	return 1;
 }
 
@@ -1073,11 +1117,13 @@ int do_close(super_block* sb, char* filePath)
 int my_close(super_block* sb, char** args)
 {
 	char** p = args;
-	if (*(p+1)==NULL){
+	if (*(p + 1) == NULL)
+	{
 		printf("\"close\" error: missing argument\n");
 		return 1;
 	}
-	if (!strcmp(*(p+1),"--help")){
+	if (!strcmp(*(p + 1), "--help"))
+	{
 		printf("Usage1: close [OPTION]... [FILE]\n");
 		printf("Usage2: close [FILE]... \n");
 		printf("Closes the specified file in addition to the current working directory \n");
@@ -1085,13 +1131,15 @@ int my_close(super_block* sb, char** args)
 		printf("    -a: Closes all specified files except the current working directory \n");
 		return 1;
 	}
-	if (!strcmp(*(p+1),"-a")){
-		for (int i = 0; open_file_list[i]!=NULL && i<MAX_OPEN_FILE; ++i)
+	if (!strcmp(*(p + 1), "-a"))
+	{
+		for (int i = 0; open_file_list[i] != NULL && i < MAX_OPEN_FILE; ++i)
 		{
-			if (!strcmp(open_file_list[i]->path,current_dir_name)){
+			if (!strcmp(open_file_list[i]->path, current_dir_name))
+			{
 				continue;
 			}
-			do_close(sb,open_file_list[i]->path);
+			do_close(sb, open_file_list[i]->path);
 		}
 		return 1;
 	}
@@ -1158,9 +1206,11 @@ void do_printf(fcb* ptr, int format)
 	}
 }
 
-int my_clear(super_block* sb, char** args){
+int my_clear(super_block* sb, char** args)
+{
 	//在CLion中无法清空，在系统的cmd中才可以
-	if(args[1]!=NULL){
+	if (args[1] != NULL)
+	{
 		printf("clear: Too many parameters \n");
 		return 1;
 	}
