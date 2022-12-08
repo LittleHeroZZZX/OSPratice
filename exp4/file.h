@@ -75,4 +75,6 @@ int my_touch(super_block* sb, char** args);
 int my_clear(super_block* sb, char** args);
 int my_cp(super_block* sb, char** args);
 int my_cat(super_block* sb, char** args);
+void show_dirs(super_block* sb, fcb* fcb, size_t level);
+int my_tree(super_block* sb, char** args);
 
