@@ -35,7 +35,7 @@ void update_fcb(fcb* fcb, unsigned char attribute, size_t length, size_t file_cn
 
 void* do_read_ch(void* stream);
 
-int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len);
+int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len,size_t p_wr);
 
 int my_read(super_block* sb, char** args);
 

@@ -444,23 +444,18 @@ size_t* get_blocks(super_block* sb, fcb* fcb)
  * @param size 读取的长度
  * @return 1
  */
-int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len)
+int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size_t p_wr)
 {
 	if (!buf)
 	{
 		printf("_do_read: buf is NULL!\n");
 		return -1;
 	}
-	if (_user_open->p_WR == _user_open->f_fcb->length)
-	{
-		printf("_do_read: Read end of file!\n");
-		return -1;
-	}
 
 	void* p_buf = buf;
 
 	fcb* fcb = _user_open->f_fcb;
-	size_t offset = _user_open->p_WR;
+	size_t offset = p_wr; // 不使用_user_open->p_WR是因为读写指针在正常读写过程中，总处于文件末尾（除非使用read命令指定位置与读取长度）
 
 	size_t* blocks = get_blocks(sb, fcb);
 	size_t p_WR_index = offset / BLOCK_SIZE;
@@ -479,12 +474,25 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len)
 	{
 		size_t size_to_read_in_block = size_to_read > BLOCK_SIZE ? BLOCK_SIZE : size_to_read;
 		memcpy(p_buf, index_to_addr(sb, blocks[i]), size_to_read_in_block);
+		p_buf += size_to_read_in_block;
 		size_to_read -= size_to_read_in_block;
 		_user_open->p_WR += size_to_read_in_block;
 	}
-	free(blocks);
+	((char*)(buf))[len] = '\0';
+//	free(blocks);
 	return 1;
 }
+
+/**
+ *
+ * @param sb
+ * @param args
+ * **args[0]为命令名称
+ * **args[1]为文件名
+ * **args[2]为读取的长度
+ * **args[3]为读取的起始位置（文件读写指针，默认为0，即从头读取）
+ * @return
+ */
 
 int my_read(super_block* sb, char** args)
 {
@@ -493,9 +501,19 @@ int my_read(super_block* sb, char** args)
 		printf("read: missing params\n");
 		return 1;
 	}
+	long long len = atoi(args[2]);
+	if (len < 0)
+	{
+		printf("read: length invalid.\n");
+		return 1;
+	}
+	long long p_wr = 0;
+	if (args[3])
+	{
+		p_wr = atoi(args[3]);
+	}
 
-	size_t len = atoi(args[2]);
-	char* buf = (char*)malloc(len);
+	void* buf = malloc(len + 1);
 	user_open* _user_open = NULL;
 
 	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
@@ -503,15 +521,30 @@ int my_read(super_block* sb, char** args)
 		printf("read: file[%s] not open\n", args[1]);
 		return 1;
 	}
-	if (_do_read(sb, _user_open, buf, len) != -1)
+	if (p_wr > _user_open->f_fcb->length || p_wr < 0)
+	{
+		printf("my_read: R&W pointer accepted is out of range!\n");
+		return 1;
+	}
+	if (_do_read(sb, _user_open, buf, len, p_wr) != -1)
 	{
 		printf("%s\n", buf);
 	}
 
-	free(buf);
+//	free(buf);
 	return 1;
 }
 
+
+/**
+ * @param sb
+ * @param args
+ * **args[0]为命令名称
+ * **args[1]为文件名
+ * **args[2]为写入模式（可选），默认为追加，-a为追加写，-t为截断写，-o为覆盖写
+ * **args[3]当args[2]为-o时，此参数为必选，表示写入的起始位置（文件读写指针，为0时表示从头写入）
+ * @return 1
+ */
 int my_write(super_block* sb, char** args)
 {
 	if (args[1] == NULL)
@@ -879,7 +912,8 @@ void do_cat(super_block* sb, fcb* fcb)
 	buf = do_read(sb, fcb, 0);
 	for (size_t i = 0; i < fcb->length; i++)
 		printf("%c", buf[i]);
-	printf("\n");
+	if(buf[fcb->length-1] != '\n')
+		printf("\n");
 }
 
 int my_cat(super_block* sb, char** args)
