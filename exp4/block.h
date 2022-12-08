@@ -24,7 +24,7 @@ void* index_to_addr(super_block* sb, size_t index);
  * @return
  */
 fcb* findFcb(super_block* sb, char* filePath);
-
+fcb* findParentFcb(super_block* sb, char* filePath);
 /**
  * 根据文件路径获得其全路径
  * @param DestFullPath 全路径

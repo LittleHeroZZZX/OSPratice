@@ -298,8 +298,7 @@ void show_csh(super_block* sb)
 
 int main()
 {
-	start_sys(DISK_BACKUP_FILENAME, &sb, 1);
-	create_dir(sb, index_to_fcb(sb, sb->root_index), "test1");
+	start_sys(DISK_BACKUP_FILENAME, &sb, 0);
 	printf("/(dir)\n");
 	show_dirs(sb, index_to_fcb(sb, sb->root_index), 1);
 	show_csh(sb);

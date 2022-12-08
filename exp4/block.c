@@ -214,3 +214,71 @@ fcb* findFcb(super_block* sb, char* filePath)
 		return ptr;
 	}
 }
+
+/**
+ * 通过文件路径找到文件父目录的fcb*
+ * @param filePath
+ * @return fcb* 找不到则返回NULL
+ */
+fcb* findParentFcb(super_block* sb, char* filePath)
+{
+    if (strcmp(filePath, "/") == 0)
+    {
+        return NULL;
+    }
+    char fullPath[_MAX_PATH];
+    getFullPath(fullPath, filePath);
+    fcb* ptr = index_to_fcb(sb, sb->root_index);
+    fcb* son = findFcb(sb, filePath);
+    int flag = 0;
+    char fileName[_MAX_FNAME];
+    char* token = strtok(fullPath, "/");
+    if (!strcmp(fullPath, "/"))
+    {
+        flag = 1;
+    }
+    else
+    {
+        while (token != NULL && flag != 1)
+        {
+            for (int i = 0; i < ptr->file_count; ++i)
+            {
+                inode* ptrInode = (inode*)do_read(sb, ptr, 0);
+                strcpy(fileName, ptrInode[i].filename);
+                if (!strcmp(ptrInode[i].filename, token))
+                {
+                    if (index_to_fcb(sb, ptrInode[i].inode_index) == son)
+                    {
+                        flag = 1;
+                        break;
+                    }
+                    ptr = index_to_fcb(sb, ptrInode[i].inode_index);
+                    break;
+                }
+            }
+            char* nextToken = strtok(NULL, "/");
+            if (nextToken == NULL && !strcmp(fileName, token))
+            {
+                flag = 1;
+            }
+            if (nextToken != NULL)
+            {
+                strcpy(token, nextToken);
+            }
+            else
+            {
+                token = NULL;
+            }
+        }
+    }
+    if (flag == 0)
+    {
+        return NULL;
+    }
+    else
+    {
+        return ptr;
+    }
+
+
+}
