@@ -30,6 +30,7 @@ char cmd[CMD_TYPES][6] = {
 	"touch",
 	"clear",
     "cp",
+	"tree"
 };
 
 //维护一个函数地址指针的数组
@@ -50,4 +51,5 @@ int (* cmd_func[])(super_block* sb, char**) = {
 	&my_touch,
 	&my_clear,
     &my_cp,
+	&my_tree
 };

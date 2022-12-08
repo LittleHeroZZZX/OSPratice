@@ -1327,3 +1327,50 @@ int my_clear(super_block* sb, char** args)
 	system("clear");
 	return 1;
 }
+
+void show_dirs(super_block* sb, fcb* fcb, size_t level)
+{
+	if (fcb->attribute==ORDINARY_FILE){
+		printf("tree: %s is not a directory!\n",fcb->filename);
+		return;
+	}
+	inode* files_inodes = (inode*)do_read(sb, fcb, 0);
+	for (int i = 0; i < fcb->file_count; i++)
+	{
+		if (files_inodes[i].attribute == DIRECTORY)
+		{
+			for (int j = 0; j < level; j++)
+			{
+				printf("    ");
+			}
+			printf("%s(dir)\n", files_inodes[i].filename);
+			if (strcmp(files_inodes[i].filename, ".") != 0 && strcmp(files_inodes[i].filename, "..") != 0)
+				show_dirs(sb, index_to_fcb(sb, files_inodes[i].inode_index), level + 1);
+		}
+		else
+		{
+			for (int j = 0; j < level; j++)
+			{
+				printf("    ");
+			}
+			printf("%s(file)\n", files_inodes[i].filename);
+		}
+	}
+	free(files_inodes);
+	
+}
+
+int my_tree(super_block* sb, char** args){
+	fcb *fcb;
+	if (args[1]==NULL){
+		fcb = current_dir;
+	} else {
+		fcb = findFcb(sb,args[1]);
+	}
+	if (fcb == NULL){
+		printf("tree: There is no such folder! \n");
+	}
+	printf("%s\n",fcb->filename);
+	show_dirs(sb, fcb,1);
+	return 1;
+}

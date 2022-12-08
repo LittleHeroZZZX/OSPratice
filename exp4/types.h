@@ -11,7 +11,7 @@
 #include "stdlib.h"
 #include "list.h"
 
-#define CMD_TYPES 16
+#define CMD_TYPES 17
 
 
 #define BLOCK_SIZE 1024
