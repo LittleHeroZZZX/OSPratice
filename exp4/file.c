@@ -496,12 +496,26 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 
 int my_read(super_block* sb, char** args)
 {
-	if (!args[0] || !args[1] || !args[2])
+	if (!args[0] || !args[1])
 	{
 		printf("read: missing params\n");
 		return 1;
 	}
-	long long len = atoi(args[2]);
+
+	//查看帮助文档
+	if (!strcmp(args[1], "--help"))
+	{
+		printf("read: Read the content of a file.\n");
+		printf("Usage1: read <FILE> [LENGTH]\n\t\t- read [LENGTH] bytes from the beginning of the file.\n");
+		printf("Usage2: read <FILE> [LENGTH] [R&W POINTER]\n\t\t- read [LENGTH] bytes from the [R&W POINTER] of the file.\n");
+		return 1;
+	}
+
+	long long len = 1;
+	if(args[2]){
+		atoi(args[2]);
+	}
+
 	if (len < 0)
 	{
 		printf("read: length invalid.\n");
@@ -550,6 +564,14 @@ int my_write(super_block* sb, char** args)
 	if (args[1] == NULL)
 	{
 		printf("Please input the file name.\n");
+		return 1;
+	}
+
+	if (!strcmp(args[1], "--help")){
+		printf("write: Write the content of a file.\n");
+		printf("Usage1: write <FILE> [MODE] [R&W POINTER]\n");
+		printf("\t\t- [MODE] can be -a, -t, -o. -a means append, -t means truncate, -o means overwrite.\n");
+		printf("\t\t- [R&W POINTER] is the position of the file to write. If [MODE] is '-o', this option must be specified.\n");
 		return 1;
 	}
 
