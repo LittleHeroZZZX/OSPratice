@@ -525,7 +525,7 @@ int my_write(super_block* sb, char** args)
 	user_open* _user_open = NULL;
 
 	// 写入模式
-	if (args[2])
+	if (args[2]) // If args[2] is not specified, APPEND mode by default.
 	{
 		if (!strcmp(args[2], "-a"))
 		{
@@ -548,6 +548,11 @@ int my_write(super_block* sb, char** args)
 			}
 			mode = OVERRIDE;
 		}
+		else
+		{
+			printf("Invalid mode.\n");
+			return 1;
+		}
 	}
 
 	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
@@ -556,14 +561,16 @@ int my_write(super_block* sb, char** args)
 		return 1;
 	}
 
-	_user_open->mode = mode;
-	char* buf = do_read_ch(stdin);
-
-	if (offset > _user_open->f_fcb->length)
+	if (offset > _user_open->f_fcb->length || offset < 0)
 	{
 		printf("R&W pointer accepted is out of range!\n");
 		return 1;
 	}
+
+	_user_open->mode = mode;
+	char* buf = do_read_ch(stdin);
+
+
 	_do_write(sb, _user_open, buf, strlen(buf), offset);
 
 	return 1;
@@ -611,6 +618,7 @@ void* do_read_ch(void* stream)
  * @param _user_open 待写入文件的user_open
  * @param buf 待写入的文件内容
  * @param size 写入的长度
+ * @param offset 文件读写指针
  * @return
  */
 void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size, size_t p_wr)
