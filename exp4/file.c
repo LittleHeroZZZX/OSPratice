@@ -904,17 +904,14 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir)
 			fcb->is_used = 0;
 			inode* inodes = (inode*)do_read(sb, dir, 0);
 //          从目录文件内删除这一项
-			for (size_t i = 0; i < dir->file_count; i++)
-			{
-				if (strcpy(inodes[i].filename, fcb->filename) == 0)
-				{
-					for (size_t j = i; j < dir->file_count - 1; j++)
-					{
-						memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
-					}
-					break;
-				}
-			}
+            for (size_t i = 0; i < dir->file_count; i++) {
+                if (index_to_fcb(sb, inodes[i].inode_index) == fcb) {
+                    for (size_t j = i; j < dir->file_count - 1; j++) {
+                        memcpy(&inodes[j], &inodes[j + 1], sizeof(inode));
+                    }
+                    break;
+                }
+            }
             size_t remain_count = dir->file_count - 1;
             size_t root_offset = 2;
             if (strcmp(dir->filename, "/") == 0) {
