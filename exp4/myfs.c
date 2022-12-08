@@ -216,8 +216,8 @@ void show_fs_info(super_block* sb)
 
 int getLine(char* str, int lim, FILE* f)
 {
-	int c;
-	int i;
+	char c;
+	int i=0;
     while ((c = fgetc(f)) != EOF && c!='\n')
     {
         str[i++] = c;
@@ -275,6 +275,7 @@ int execute(super_block* sb, char** args)
 		}
 	}
 	printf("\"csh error\": Unknown command\n");
+    return 1;
 }
 
 void show_csh(super_block* sb)
@@ -292,7 +293,7 @@ void show_csh(super_block* sb)
     }
     getchar();
 	char* cmd = malloc(MAX_CMD_LENGTH);
-	char** args = malloc(MAX_ARG_LENGTH * sizeof(char*));
+	char** args;
 	int status = 1;
 	do
 	{
