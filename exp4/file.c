@@ -478,7 +478,7 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 		_user_open->p_WR += size_to_read_in_block;
 	}
 	((char*)(buf))[len] = '\0';
-//	free(blocks);
+	free(blocks);
 	return 1;
 }
 
@@ -506,13 +506,15 @@ int my_read(super_block* sb, char** args)
 	{
 		printf("read: Read the content of a file.\n");
 		printf("Usage1: read <FILE> [LENGTH]\n\t\t- read [LENGTH] bytes from the beginning of the file.\n");
-		printf("Usage2: read <FILE> [LENGTH] [R&W POINTER]\n\t\t- read [LENGTH] bytes from the [R&W POINTER] of the file.\n");
+		printf(
+			"Usage2: read <FILE> [LENGTH] [R&W POINTER]\n\t\t- read [LENGTH] bytes from the [R&W POINTER] of the file.\n");
 		return 1;
 	}
 
 	long long len = 1;
-	if(args[2]){
-		atoi(args[2]);
+	if (args[2])
+	{
+		len = atoi(args[2]);
 	}
 
 	if (len < 0)
@@ -544,10 +546,9 @@ int my_read(super_block* sb, char** args)
 		printf("%s\n", buf);
 	}
 
-//	free(buf);
+	free(buf);
 	return 1;
 }
-
 
 /**
  * @param sb
@@ -566,11 +567,13 @@ int my_write(super_block* sb, char** args)
 		return 1;
 	}
 
-	if (!strcmp(args[1], "--help")){
+	if (!strcmp(args[1], "--help"))
+	{
 		printf("write: Write the content of a file.\n");
 		printf("Usage1: write <FILE> [MODE] [R&W POINTER]\n");
 		printf("\t\t- [MODE] can be -a, -t, -o. -a means append, -t means truncate, -o means overwrite.\n");
-		printf("\t\t- [R&W POINTER] is the position of the file to write. If [MODE] is '-o', this option must be specified.\n");
+		printf(
+			"\t\t- [R&W POINTER] is the position of the file to write. If [MODE] is '-o', this option must be specified.\n");
 		return 1;
 	}
 
@@ -681,7 +684,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size, s
 	size_t* old_blocks = get_blocks(sb, _fcb);
 	size_t old_block_cnt = (_fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
 	size_t old_block_frag = _fcb->length % BLOCK_SIZE; //原始文件最后一块的块大小
-	size_t* new_blocks;
+	size_t* new_blocks = NULL;
 	size_t new_block_size = 0;
 	size_t new_block_cnt = 0;
 	size_t rest_size = size;
@@ -807,9 +810,9 @@ void do_write(super_block* sb, fcb* fcb, void* buff, size_t size)
 	memcpy(new_blocks, blocks, sizeof(size_t) * block_cnt);
 	if (block_cnt > 0)
 	{
-        ssize_t block_rest_size = BLOCK_SIZE - fcb->length % BLOCK_SIZE;
+		ssize_t block_rest_size = BLOCK_SIZE - fcb->length % BLOCK_SIZE;
 		memcpy(index_to_addr(sb, new_blocks[block_cnt - 1]) + fcb->length % BLOCK_SIZE, buff,
-        block_rest_size>rest_size?rest_size:block_rest_size);
+			block_rest_size > rest_size ? rest_size : block_rest_size);
 		rest_size -= block_rest_size;
 	}
 	for (size_t i = block_cnt; i < (fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
@@ -934,7 +937,7 @@ void do_cat(super_block* sb, fcb* fcb)
 	buf = do_read(sb, fcb, 0);
 	for (size_t i = 0; i < fcb->length; i++)
 		printf("%c", buf[i]);
-	if(buf[fcb->length-1] != '\n')
+	if (buf[fcb->length - 1] != '\n')
 		printf("\n");
 }
 
@@ -1352,8 +1355,9 @@ int my_clear(super_block* sb, char** args)
 
 void show_dirs(super_block* sb, fcb* fcb, size_t level)
 {
-	if (fcb->attribute==ORDINARY_FILE){
-		printf("tree: %s is not a directory!\n",fcb->filename);
+	if (fcb->attribute == ORDINARY_FILE)
+	{
+		printf("tree: %s is not a directory!\n", fcb->filename);
 		return;
 	}
 	inode* files_inodes = (inode*)do_read(sb, fcb, 0);
@@ -1379,20 +1383,25 @@ void show_dirs(super_block* sb, fcb* fcb, size_t level)
 		}
 	}
 	free(files_inodes);
-	
+
 }
 
-int my_tree(super_block* sb, char** args){
-	fcb *fcb;
-	if (args[1]==NULL){
+int my_tree(super_block* sb, char** args)
+{
+	fcb* fcb;
+	if (args[1] == NULL)
+	{
 		fcb = current_dir;
-	} else {
-		fcb = findFcb(sb,args[1]);
 	}
-	if (fcb == NULL){
+	else
+	{
+		fcb = findFcb(sb, args[1]);
+	}
+	if (fcb == NULL)
+	{
 		printf("tree: There is no such folder! \n");
 	}
-	printf("%s\n",fcb->filename);
-	show_dirs(sb, fcb,1);
+	printf("%s\n", fcb->filename);
+	show_dirs(sb, fcb, 1);
 	return 1;
 }
