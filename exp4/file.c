@@ -268,8 +268,7 @@ int my_ls(super_block* sb, char** args)
 	inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 	for (int i = 0; i < dirFcb->file_count; ++i)
 	{
-		fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-		printf("%s\t", ptr->filename);
+		printf("%s\t", ptrInode[i].filename);
 	}
 	printf("\n");
 	return 1;
@@ -808,9 +807,10 @@ void do_write(super_block* sb, fcb* fcb, void* buff, size_t size)
 	memcpy(new_blocks, blocks, sizeof(size_t) * block_cnt);
 	if (block_cnt > 0)
 	{
+        ssize_t block_rest_size = BLOCK_SIZE - fcb->length % BLOCK_SIZE;
 		memcpy(index_to_addr(sb, new_blocks[block_cnt - 1]) + fcb->length % BLOCK_SIZE, buff,
-			BLOCK_SIZE - fcb->length % BLOCK_SIZE);
-		rest_size -= BLOCK_SIZE - fcb->length % BLOCK_SIZE;
+        block_rest_size>rest_size?rest_size:block_rest_size);
+		rest_size -= block_rest_size;
 	}
 	for (size_t i = block_cnt; i < (fcb->length + size + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
 	{
