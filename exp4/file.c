@@ -461,13 +461,14 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 	size_t p_WR_frag = offset % BLOCK_SIZE;
 	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
 	size_t size_to_read = len > fcb->length - offset ? fcb->length - offset : len;
-
+    size_t first_read = size_to_read > BLOCK_SIZE - p_WR_frag ? BLOCK_SIZE - p_WR_frag : size_to_read;
 
 	if (p_WR_frag)
 	{
-		memcpy(p_buf, index_to_addr(sb, blocks[p_WR_index++]) + p_WR_frag, BLOCK_SIZE - p_WR_frag);
-		p_buf += BLOCK_SIZE - p_WR_frag;
-		_user_open->p_WR += BLOCK_SIZE - p_WR_frag;
+		memcpy(p_buf, index_to_addr(sb, blocks[p_WR_index++]) + p_WR_frag, first_read);
+		p_buf += first_read;
+		_user_open->p_WR += first_read;
+        size_to_read -= first_read;
 	}
 	for (size_t i = p_WR_index; i < block_cnt && size_to_read; i++)
 	{
