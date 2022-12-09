@@ -51,7 +51,7 @@ fcb* index_to_fcb(super_block* sb, size_t index);
 
 ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb);
 
-void do_printf(fcb* ptr, int format);
+void do_printf(fcb* ptr, inode* node, int format);
 
 void do_copy(super_block* sb, char* src, char* dest);
 

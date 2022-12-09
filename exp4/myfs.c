@@ -32,6 +32,7 @@ void recover(super_block** sb, char* bak_file)
 	fclose(fp);
 
 	current_dir = index_to_fcb(*sb, (*sb)->root_index);
+    do_open(*sb, current_dir_name);
 }
 
 // 传递超级块指针的指针是为了让超级块指针指向0号内存

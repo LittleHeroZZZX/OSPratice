@@ -110,12 +110,12 @@ int my_open(super_block* sb, char** args)
 	{
 		if (!strcmp(args[1], "-l"))
 		{
-			do_printf(NULL, FILE_ATTRIBUTES_TITLE);
+			do_printf(NULL, NULL, FILE_ATTRIBUTES_TITLE);
 			for (int i = 0; i < MAX_OPEN_FILE; i++)
 			{
 				if (open_file_list[i])
 				{
-					do_printf(open_file_list[i]->f_fcb, FILE_ATTRIBUTES);
+					do_printf(open_file_list[i]->f_fcb, NULL, FILE_ATTRIBUTES);
 				}
 			}
 			return 1;
@@ -227,12 +227,12 @@ int my_ls(super_block* sb, char** args)
 					return 1;
 				}
 			}
-			do_printf(NULL, FILE_ATTRIBUTES_TITLE);
+			do_printf(NULL, NULL,FILE_ATTRIBUTES_TITLE);
 			inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 			for (int i = 0; i < dirFcb->file_count; ++i)
 			{
 				fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-				do_printf(ptr, FILE_ATTRIBUTES);
+				do_printf(ptr, ptrInode+i,FILE_ATTRIBUTES);
 			}
 			return 1;
 		}
@@ -1280,7 +1280,9 @@ int my_touch(super_block* sb, char** args)
 	return 1;
 }
 
-void do_printf(fcb* ptr, int format)
+
+
+void do_printf(fcb* ptr, inode* node,int format)
 {
 	switch (format)
 	{
@@ -1298,8 +1300,14 @@ void do_printf(fcb* ptr, int format)
 			printf("fcb NULL");
 			return;
 		}
+        if (!node)
+        {
+            inode temp_node;
+            strcpy(temp_node.filename, ptr->filename);
+            node = &temp_node;
+        }
 		printf("%-10s\t%-10d\t%-12s\t%-04d-%02d-%02d %02d:%02d\t%04d-%02d-%02d %02d:%02d\t\n",
-			ptr->filename,
+			node->filename,
 			ptr->length,
 			ptr->attribute == 1 ? "directory" : "file",
 			ptr->create_time.tm_year + BASE_YEAR,
