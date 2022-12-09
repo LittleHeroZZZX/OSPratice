@@ -543,7 +543,8 @@ int my_read(super_block* sb, char** args)
 	{
 		printf("%s", buf);
 	}
-	if(buf[strlen(buf)-1]!='\n'){
+	if (buf[strlen(buf) - 1] != '\n')
+	{
 		printf("\n");
 	}
 
@@ -738,7 +739,7 @@ void _do_write(super_block* sb, user_open* _user_open, void* buf, size_t size, s
 	case OVERRIDE:
 		old_block_cnt = (p_wr + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		old_block_frag = p_wr % BLOCK_SIZE;
-		new_block_size = p_wr + size;
+		new_block_size = size > _fcb->length - p_wr ? p_wr + size : _fcb->length;
 		new_block_cnt = (new_block_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 		new_blocks = (size_t*)malloc(new_block_cnt * sizeof(size_t));
 		memcpy(new_blocks, old_blocks, old_block_cnt * sizeof(size_t));
