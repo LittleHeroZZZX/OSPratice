@@ -40,6 +40,7 @@ ssize_t allocate_block(super_block* sb, size_t block_count)
 			break;
 		}
 	}
+    sb->free_block_count -= block_count;
 	return block;
 
 }
