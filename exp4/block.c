@@ -80,6 +80,7 @@ void free_block(super_block* sb, size_t block_index, size_t block_count)
 			merge_block(p, list_entry(p->list.next, free_block_list, list));
 		}
 	}
+	sb->free_block_count+=block_count;
 }
 
 void merge_block(free_block_list* fbl1, free_block_list* fbl2)
@@ -88,7 +89,7 @@ void merge_block(free_block_list* fbl1, free_block_list* fbl2)
 	list_del(&fbl2->list);
 }
 
-static char* left(char* dest, const char* src, int n)
+static char* left(char* dest, char* src, int n)
 {
 	char* p = dest;
 	char* q = src;

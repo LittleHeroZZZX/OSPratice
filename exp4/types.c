@@ -3,7 +3,7 @@
 #include "file.h"
 
 
-int open_file_count = 0;
+//int open_file_count = 0;
 
 fcb* current_dir;
 

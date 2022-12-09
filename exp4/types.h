@@ -110,7 +110,7 @@ typedef struct user_open
 	char path[256];    // 文件的完整绝对路径
 	size_t p_WR; // 读写指针，指向硬盘中的地址
 	int mode;    // 文件写入模式
-	unsigned char fcb_modified;    // 文件FCB修改判定位
+
 } user_open;
 
 
@@ -124,7 +124,7 @@ extern int (* cmd_func[])(super_block*, char**);
 
 extern user_open* open_file_list[MAX_OPEN_FILE];
 
-extern int open_file_count;
+//extern int open_file_count;
 
 extern int current_dir_fd;
 

@@ -165,16 +165,16 @@ __attribute__((unused)) void show(free_block_list* fbl)
 
 void show_fs_info(super_block* sb)
 {
-	printf("%-20s: %lldMB %lldKB\n",
+	printf("%-20s: %-3lldMB %-3lldKB\n",
 		"disk space size",
 		sb->block_count * BLOCK_SIZE / 1024 / 1024,
 		sb->block_count * BLOCK_SIZE / 1024 % 1024);
-	printf("%-20s: %lldMB %lldKB\n",
+	printf("%-20s: %-3lldMB %-3lldKB\n",
 		"free space size",
 		sb->free_block_count * BLOCK_SIZE / 1024 / 1024 % 1024,
 		sb->free_block_count * BLOCK_SIZE / 1024 % 1024);
-	printf("%-20s: %lldKB\n", "block size", BLOCK_SIZE / 1024);
-	printf("%-20s: %lldMB %lldKB \n",
+	printf("%-20s: %-3lldKB\n", "block size", BLOCK_SIZE / 1024);
+	printf("%-20s: %-3lldMB %-3lldKB \n",
 		"max file size",
 		MAX_FILE_SIZE / 1024 / 1024,
 		MAX_FILE_SIZE / 1024 % 1024);

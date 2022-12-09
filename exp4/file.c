@@ -227,12 +227,12 @@ int my_ls(super_block* sb, char** args)
 					return 1;
 				}
 			}
-			do_printf(NULL, NULL,FILE_ATTRIBUTES_TITLE);
+			do_printf(NULL, NULL, FILE_ATTRIBUTES_TITLE);
 			inode* ptrInode = (inode*)do_read(sb, dirFcb, 0);
 			for (int i = 0; i < dirFcb->file_count; ++i)
 			{
 				fcb* ptr = index_to_fcb(sb, ptrInode[i].inode_index);
-				do_printf(ptr, ptrInode+i,FILE_ATTRIBUTES);
+				do_printf(ptr, ptrInode + i, FILE_ATTRIBUTES);
 			}
 			return 1;
 		}
@@ -451,13 +451,13 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 
 	fcb* fcb = _user_open->f_fcb;
 	size_t offset = p_wr; // offset不使用_user_open->p_WR是因为读写指针在正常读写过程中，总处于文件末尾（除非使用read命令指定位置与读取长度）
-	_user_open->p_WR=p_wr;
+	_user_open->p_WR = p_wr;
 
 	size_t* blocks = get_blocks(sb, fcb);
 	size_t p_WR_index = offset / BLOCK_SIZE;
 	size_t p_WR_frag = offset % BLOCK_SIZE;
 	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-	size_t size_to_read = len > fcb->length - offset + 1 ? fcb->length - offset + 1 : len;
+	size_t size_to_read = len > fcb->length - offset ? fcb->length - offset : len;
 	size_t valid_len = size_to_read;
 
 	if (p_WR_frag)
@@ -526,17 +526,23 @@ int my_read(super_block* sb, char** args)
 	char* buf = malloc(len + 1);
 	user_open* _user_open = NULL;
 
-	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
+	switch (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE))
 	{
-		printf("read: file[%s] not open\n", args[1]);
+	case -2:
+		printf("write: file[%s] not open\n", args[1]);
 		return 1;
+	case -1:
+		return 1;
+		break;
 	}
 
 	if (args[3])
 	{
 		p_wr = atoi(args[3]);
-	}else{
-		p_wr=_user_open->p_WR==_user_open->f_fcb->length?0:_user_open->p_WR;
+	}
+	else
+	{
+		p_wr = _user_open->p_WR == _user_open->f_fcb->length ? 0 : _user_open->p_WR;
 	}
 
 	if (p_wr > _user_open->f_fcb->length || p_wr < 0)
@@ -620,10 +626,14 @@ int my_write(super_block* sb, char** args)
 		}
 	}
 
-	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
+	switch (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE))
 	{
+	case -2:
 		printf("write: file[%s] not open\n", args[1]);
 		return 1;
+	case -1:
+		return 1;
+		break;
 	}
 
 	if (offset > _user_open->f_fcb->length || offset < 0)
@@ -1160,7 +1170,6 @@ ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb)
 	return index;
 }
 
-
 int my_rm(super_block* sb, char** args)
 {
 	fcb* ptr = findFcb(sb, args[1]);
@@ -1280,9 +1289,7 @@ int my_touch(super_block* sb, char** args)
 	return 1;
 }
 
-
-
-void do_printf(fcb* ptr, inode* node,int format)
+void do_printf(fcb* ptr, inode* node, int format)
 {
 	switch (format)
 	{
@@ -1300,12 +1307,12 @@ void do_printf(fcb* ptr, inode* node,int format)
 			printf("fcb NULL");
 			return;
 		}
-        if (!node)
-        {
-            inode temp_node;
-            strcpy(temp_node.filename, ptr->filename);
-            node = &temp_node;
-        }
+		if (!node)
+		{
+			inode temp_node;
+			strcpy(temp_node.filename, ptr->filename);
+			node = &temp_node;
+		}
 		printf("%-10s\t%-10d\t%-12s\t%-04d-%02d-%02d %02d:%02d\t%04d-%02d-%02d %02d:%02d\t\n",
 			node->filename,
 			ptr->length,
