@@ -454,21 +454,22 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 	void* p_buf = buf;
 
 	fcb* fcb = _user_open->f_fcb;
-	size_t offset = p_wr; // 不使用_user_open->p_WR是因为读写指针在正常读写过程中，总处于文件末尾（除非使用read命令指定位置与读取长度）
+	size_t offset = p_wr; // offset不使用_user_open->p_WR是因为读写指针在正常读写过程中，总处于文件末尾（除非使用read命令指定位置与读取长度）
 
 	size_t* blocks = get_blocks(sb, fcb);
 	size_t p_WR_index = offset / BLOCK_SIZE;
 	size_t p_WR_frag = offset % BLOCK_SIZE;
 	size_t block_cnt = (fcb->length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-	size_t size_to_read = len > fcb->length - offset ? fcb->length - offset : len;
-    size_t first_read = size_to_read > BLOCK_SIZE - p_WR_frag ? BLOCK_SIZE - p_WR_frag : size_to_read;
+	size_t size_to_read = len > fcb->length - offset + 1 ? fcb->length - offset + 1 : len;
+	size_t valid_len = size_to_read;
 
 	if (p_WR_frag)
 	{
-		memcpy(p_buf, index_to_addr(sb, blocks[p_WR_index++]) + p_WR_frag, first_read);
-		p_buf += first_read;
-		_user_open->p_WR += first_read;
-        size_to_read -= first_read;
+		size_t size_to_read_in_block = size_to_read > BLOCK_SIZE - p_WR_frag ? BLOCK_SIZE - p_WR_frag : size_to_read;
+		memcpy(p_buf, index_to_addr(sb, blocks[p_WR_index++]) + p_WR_frag, size_to_read_in_block);
+		p_buf += size_to_read_in_block;
+		_user_open->p_WR += size_to_read_in_block;
+		size_to_read -= size_to_read_in_block;
 	}
 	for (size_t i = p_WR_index; i < block_cnt && size_to_read; i++)
 	{
@@ -478,7 +479,7 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 		size_to_read -= size_to_read_in_block;
 		_user_open->p_WR += size_to_read_in_block;
 	}
-	((char*)(buf))[len] = '\0';
+	((char*)(buf))[valid_len - 1] = '\0';
 	free(blocks);
 	return 1;
 }
@@ -529,7 +530,7 @@ int my_read(super_block* sb, char** args)
 		p_wr = atoi(args[3]);
 	}
 
-	void* buf = malloc(len + 1);
+	char* buf = malloc(len + 1);
 	user_open* _user_open = NULL;
 
 	if (is_file_open(sb, args[1], &_user_open, ORDINARY_FILE) == -2)
@@ -544,7 +545,10 @@ int my_read(super_block* sb, char** args)
 	}
 	if (_do_read(sb, _user_open, buf, len, p_wr) != -1)
 	{
-		printf("%s\n", buf);
+		printf("%s", buf);
+	}
+	if(buf[strlen(buf)-1]!='\n'){
+		printf("\n");
 	}
 
 	free(buf);
