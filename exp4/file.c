@@ -451,6 +451,7 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 
 	fcb* fcb = _user_open->f_fcb;
 	size_t offset = p_wr; // offset不使用_user_open->p_WR是因为读写指针在正常读写过程中，总处于文件末尾（除非使用read命令指定位置与读取长度）
+	_user_open->p_WR=p_wr;
 
 	size_t* blocks = get_blocks(sb, fcb);
 	size_t p_WR_index = offset / BLOCK_SIZE;
@@ -475,7 +476,7 @@ int _do_read(super_block* sb, user_open* _user_open, void* buf, size_t len, size
 		size_to_read -= size_to_read_in_block;
 		_user_open->p_WR += size_to_read_in_block;
 	}
-	((char*)(buf))[valid_len - 1] = '\0';
+	((char*)(buf))[valid_len] = '\0';
 	free(blocks);
 	return 1;
 }
@@ -521,10 +522,6 @@ int my_read(super_block* sb, char** args)
 		return 1;
 	}
 	long long p_wr = 0;
-	if (args[3])
-	{
-		p_wr = atoi(args[3]);
-	}
 
 	char* buf = malloc(len + 1);
 	user_open* _user_open = NULL;
@@ -534,11 +531,20 @@ int my_read(super_block* sb, char** args)
 		printf("read: file[%s] not open\n", args[1]);
 		return 1;
 	}
+
+	if (args[3])
+	{
+		p_wr = atoi(args[3]);
+	}else{
+		p_wr=_user_open->p_WR==_user_open->f_fcb->length?0:_user_open->p_WR;
+	}
+
 	if (p_wr > _user_open->f_fcb->length || p_wr < 0)
 	{
 		printf("my_read: R&W pointer accepted is out of range!\n");
 		return 1;
 	}
+
 	if (_do_read(sb, _user_open, buf, len, p_wr) != -1)
 	{
 		printf("%s", buf);
