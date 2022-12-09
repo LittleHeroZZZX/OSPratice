@@ -1,13 +1,3 @@
-/*
- * @Author: zhouxin zzzx@hdu.edu.cn
- * @Date: 2022-11-25 14:59:28
- * @LastEditTime: 2022-11-25 21:33:32
- * @Software: VSCode
- */
-
-
-
-
 #ifndef MYFS_H
 #define MYFS_H
 #include "types.h"

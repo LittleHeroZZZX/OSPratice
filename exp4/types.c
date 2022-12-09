@@ -16,9 +16,7 @@ char current_dir_name[_MAX_PATH] = "/";
 char cmd[CMD_TYPES][6] = {
 	"cd",
 	"mkdir",
-	"rmdir",
 	"ls",
-	"create",
 	"rm",
 	"cat",
 	"write",
@@ -37,9 +35,7 @@ char cmd[CMD_TYPES][6] = {
 int (* cmd_func[])(super_block* sb, char**) = {
 	&my_cd,
 	&my_mkdir,
-	&my_rmdir,
 	&my_ls,
-	&my_create,
 	&my_rm,
     &my_cat,
 	&my_write,

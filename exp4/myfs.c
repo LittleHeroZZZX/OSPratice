@@ -1,10 +1,3 @@
-/*
- * @Author: zhouxin zzzx@hdu.edu.cn
- * @Date: 2022-11-25 15:16:25
- * @LastEditTime: 2022-11-26 19:09:01
- * @Software: VSCode
- */
-
 #include <sys/types.h>
 #include "myfs.h"
 // 初始化文件系统

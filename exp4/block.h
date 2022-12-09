@@ -1,8 +1,3 @@
-//
-// Created by littleherozzzx on 02/12/2022.
-// 磁盘块管理（分配、回收）
-//
-
 #ifndef BLOCK_H
 #define BLOCK_H
 

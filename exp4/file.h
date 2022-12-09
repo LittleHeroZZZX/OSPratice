@@ -1,7 +1,3 @@
-//
-// Created by littleherozzzx on 02/12/2022.
-// 文件和文件目录管理
-//
 #include "stdio.h"
 #include "types.h"
 #include "string.h"
@@ -65,8 +61,6 @@ ssize_t delete_file(super_block* sb, fcb* fcb, struct FCB* dir);
 
 void clear_file(super_block* sb, fcb* fcb);
 
-int my_rmdir(super_block* sb, char** args);
-int my_create(super_block* sb, char** args);
 int my_rm(super_block* sb, char** args);
 int my_exit_sys(super_block* sb, char** args);
 int my_close(super_block* sb, char** args);

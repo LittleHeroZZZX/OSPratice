@@ -1,8 +1,3 @@
-//
-// Created by littleherozzzx on 02/12/2022.
-// 存放公共数据结构和宏定义常量
-//
-
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -11,7 +6,7 @@
 #include "stdlib.h"
 #include "list.h"
 
-#define CMD_TYPES 17
+#define CMD_TYPES 14
 
 
 #define BLOCK_SIZE 1024

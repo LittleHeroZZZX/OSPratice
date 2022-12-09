@@ -1,9 +1,3 @@
-/*
- * @Author: zhouxin zzzx@hdu.edu.cn
- * @Date: 2022-11-25 14:23:24
- * @LastEditTime: 2022-11-25 21:21:19
- * @Software: VSCode
- */
 #ifndef LIST_H
 #define LIST_H
 #define offset_of(type, member) ((size_t) &((type *)0)->member)

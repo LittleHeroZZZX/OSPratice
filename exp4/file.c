@@ -1,7 +1,3 @@
-//
-// Created by littleherozzzx on 02/12/2022.
-//
-
 #include "file.h"
 
 extern fcb* current_dir;
@@ -1157,15 +1153,6 @@ ssize_t dir_fcb_to_index(super_block* sb, fcb* fcb)
 	return index;
 }
 
-int my_rmdir(super_block* sb, char** args)
-{
-	return 1;
-}
-
-int my_create(super_block* sb, char** args)
-{
-	return 1;
-}
 
 int my_rm(super_block* sb, char** args)
 {
